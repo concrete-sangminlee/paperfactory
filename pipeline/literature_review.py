@@ -1,4 +1,5 @@
 import json
+import re
 import logging
 from utils.claude_cli import call_claude
 
@@ -6,123 +7,138 @@ logger = logging.getLogger(__name__)
 
 WEB_TOOLS = ["WebSearch", "WebFetch"]
 
-SYSTEM_PROMPT = """You are a senior research scientist specializing in structural engineering and AI/ML applications.
-Your task is to conduct a thorough literature review using web search.
-You MUST use the WebSearch tool to find real, published academic papers.
-Search Google Scholar, ResearchGate, ScienceDirect, ASCE Library, and other academic databases.
-DO NOT fabricate or hallucinate any paper titles, authors, or DOIs.
-Only include papers you have actually found through web search.
-Focus on recent publications (last 5 years) while including seminal works.
+SEARCH_SYSTEM = """You are a research scientist. Your ONLY job is to use WebSearch to find real academic papers.
+You MUST use the WebSearch tool multiple times with different queries.
+For each paper found, provide: title, authors, year, journal, DOI or URL.
+ONLY include papers you actually found via web search. Never fabricate papers.
 Always respond in English."""
+
+ANALYSIS_SYSTEM = """You are a senior research scientist specializing in structural engineering and AI/ML.
+Analyze the provided literature search results and produce a structured review.
+Always respond in English.
+You MUST respond with valid JSON only. No markdown code blocks, no extra text."""
+
+
+def _clean_json(raw: str) -> str:
+    cleaned = raw.strip()
+    # Remove markdown code blocks
+    match = re.search(r'```(?:json)?\s*\n(.*?)```', cleaned, re.DOTALL)
+    if match:
+        cleaned = match.group(1).strip()
+    # Try to find JSON object
+    if not cleaned.startswith('{'):
+        brace_start = cleaned.find('{')
+        if brace_start != -1:
+            cleaned = cleaned[brace_start:]
+    # Find matching closing brace
+    depth = 0
+    end = 0
+    for i, c in enumerate(cleaned):
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    if end > 0:
+        cleaned = cleaned[:end]
+    return cleaned
 
 
 def run(topic: str, journal_guideline: dict, progress_callback=None) -> dict:
     if progress_callback:
-        progress_callback("Generating search keywords...")
+        progress_callback("Step 1/3: Generating search keywords...")
 
     keywords_prompt = f"""Given the research topic: "{topic}"
 Target journal: {journal_guideline.get('journal_name', '')}
-Journal scope: {journal_guideline.get('scope', '')}
 
-Generate a comprehensive list of search keywords and key phrases for literature review.
-Respond in JSON format:
-{{
-    "primary_keywords": ["keyword1", "keyword2", ...],
-    "secondary_keywords": ["keyword1", "keyword2", ...],
-    "key_phrases": ["phrase1", "phrase2", ...],
-    "related_fields": ["field1", "field2", ...]
-}}"""
+Generate search keywords. Respond in JSON:
+{{"primary_keywords": ["kw1", "kw2"], "secondary_keywords": ["kw3"], "key_phrases": ["phrase1"]}}"""
 
-    keywords_raw = call_claude(keywords_prompt, system=SYSTEM_PROMPT, timeout=120)
+    keywords_raw = call_claude(keywords_prompt, system=ANALYSIS_SYSTEM, timeout=120)
     try:
-        cleaned = keywords_raw.strip()
-        if cleaned.startswith("```"):
-            lines = cleaned.split("\n")
-            cleaned = "\n".join(lines[1:-1])
-        keywords = json.loads(cleaned)
-    except json.JSONDecodeError:
-        keywords = {
-            "primary_keywords": [topic],
-            "secondary_keywords": [],
-            "key_phrases": [],
-            "related_fields": [],
-        }
+        keywords = json.loads(_clean_json(keywords_raw))
+    except (json.JSONDecodeError, ValueError):
+        keywords = {"primary_keywords": [topic], "secondary_keywords": [], "key_phrases": []}
 
     if progress_callback:
-        progress_callback("Searching academic databases for relevant papers...")
+        progress_callback("Step 2/3: Searching academic databases for papers...")
 
-    all_keywords = keywords.get("primary_keywords", []) + keywords.get("key_phrases", [])
-    search_queries = all_keywords[:5]
+    all_kw = keywords.get("primary_keywords", []) + keywords.get("key_phrases", [])
+    search_terms = all_kw[:4] if all_kw else [topic]
 
-    review_prompt = f"""Conduct a comprehensive literature review on the topic: "{topic}"
+    search_prompt = f"""Search the web for academic papers related to: "{topic}"
 
-You MUST perform the following web searches to find REAL published papers:
+Perform these searches:
+{chr(10).join(f'{i+1}. WebSearch for: "{q}"' for i, q in enumerate(search_terms))}
+{len(search_terms)+1}. WebSearch for: "{topic} structural engineering"
+{len(search_terms)+2}. WebSearch for: "{topic} {journal_guideline.get('journal_name', '')}"
+{len(search_terms)+3}. WebSearch for: "{topic} deep learning machine learning"
 
-1. Search for each of these queries on the web:
-{chr(10).join(f'   - "{q}"' for q in search_queries)}
+For each paper you find, record:
+- Title (exact)
+- Authors
+- Year
+- Journal name
+- DOI or URL
 
-2. Also search for:
-   - "{topic} site:scholar.google.com"
-   - "{topic} structural engineering machine learning"
-   - "{topic} {journal_guideline.get('journal_name', '')}"
+List ALL papers you find. Aim for at least 10-15 papers."""
 
-3. For each paper you find, visit its page to get accurate details (title, authors, year, journal, DOI).
+    search_raw = call_claude(
+        search_prompt,
+        system=SEARCH_SYSTEM,
+        timeout=600,
+        allowed_tools=WEB_TOOLS,
+        max_turns=20,
+    )
 
-4. After searching, compile your findings.
+    if progress_callback:
+        progress_callback("Step 3/3: Analyzing literature and identifying research gaps...")
 
-IMPORTANT:
-- ONLY include papers you actually found through web search
-- Include the DOI or URL for each paper
-- Do NOT make up paper titles or authors
-- If you cannot find enough papers, say so honestly
-
+    analysis_prompt = f"""Below are academic papers found via web search about: "{topic}"
 Target journal: {journal_guideline.get('journal_name', '')}
 Journal scope: {journal_guideline.get('scope', '')}
 
-After completing all searches, respond in JSON format:
+=== SEARCH RESULTS ===
+{search_raw[:8000]}
+=== END SEARCH RESULTS ===
+
+Analyze these papers and respond with ONLY this JSON (no markdown, no code blocks):
 {{
-    "summary": "Brief overview of the field (2-3 paragraphs)",
+    "summary": "2-3 paragraph overview of the field and current research landscape",
     "key_papers": [
         {{
-            "authors": "Author names",
+            "authors": "Author names as found",
             "year": 2024,
-            "title": "Paper title",
+            "title": "Exact paper title as found",
             "journal": "Journal name",
             "doi_or_url": "DOI or URL",
-            "key_findings": "Main contributions",
-            "relevance": "How it relates to our topic"
+            "key_findings": "Brief summary of contributions",
+            "relevance": "Why relevant to our topic"
         }}
     ],
-    "research_gaps": ["gap1", "gap2", ...],
-    "state_of_the_art": "Description of current best approaches",
+    "research_gaps": ["gap1", "gap2", "gap3"],
+    "state_of_the_art": "Current best approaches and methods",
     "available_datasets": [
         {{
             "name": "Dataset name",
             "description": "What it contains",
-            "source": "Where to find it (URL)",
+            "source": "URL or source",
             "size": "Approximate size"
         }}
     ],
-    "potential_contributions": ["contribution1", "contribution2", ...],
-    "suggested_methodology": "Recommended approach based on literature"
+    "potential_contributions": ["contribution1", "contribution2"],
+    "suggested_methodology": "Recommended approach based on gaps and state of the art"
 }}"""
 
-    review_raw = call_claude(
-        review_prompt,
-        system=SYSTEM_PROMPT,
-        timeout=600,
-        allowed_tools=WEB_TOOLS,
-        max_turns=15,
-    )
+    analysis_raw = call_claude(analysis_prompt, system=ANALYSIS_SYSTEM, timeout=300)
     try:
-        cleaned = review_raw.strip()
-        if cleaned.startswith("```"):
-            lines = cleaned.split("\n")
-            cleaned = "\n".join(lines[1:-1])
-        review = json.loads(cleaned)
-    except json.JSONDecodeError:
+        review = json.loads(_clean_json(analysis_raw))
+    except (json.JSONDecodeError, ValueError):
+        logger.error(f"Failed to parse analysis JSON. Raw: {analysis_raw[:500]}")
         review = {
-            "summary": review_raw,
+            "summary": analysis_raw,
             "key_papers": [],
             "research_gaps": [],
             "state_of_the_art": "",
@@ -131,9 +147,9 @@ After completing all searches, respond in JSON format:
             "suggested_methodology": "",
         }
 
+    papers_count = len(review.get("key_papers", []))
     if progress_callback:
-        papers_found = len(review.get("key_papers", []))
-        progress_callback(f"Literature review completed. Found {papers_found} relevant papers.")
+        progress_callback(f"Literature review completed. Found {papers_count} relevant papers.")
 
     return {
         "keywords": keywords,
