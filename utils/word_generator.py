@@ -227,7 +227,7 @@ def generate_word(paper_content: dict, journal_key: str, figures: list[str] = No
         _apply_font(fig_h_run, formatting)
 
     if figures:
-        caption_style = fig_config.get("caption_style", "Fig. {n}. {desc}")
+        custom_captions = paper_content.get("figure_captions", [])
         for i, fig_path in enumerate(figures, 1):
             if os.path.exists(fig_path):
                 fig_para = doc.add_paragraph()
@@ -238,13 +238,13 @@ def generate_word(paper_content: dict, journal_key: str, figures: list[str] = No
                     fig_para.add_run(f"[Figure {i}: {os.path.basename(fig_path)}]")
                 _set_spacing(fig_para, formatting)
 
-                cap_text = caption_style.replace("{n}", str(i)).replace(
-                    "{desc}", os.path.splitext(os.path.basename(fig_path))[0]
-                )
+                # Use custom caption if available, otherwise generate from filename
+                if i <= len(custom_captions):
+                    cap_text = custom_captions[i - 1]
+                else:
+                    cap_text = f"Fig. {i}. {os.path.splitext(os.path.basename(fig_path))[0]}"
                 cap_para = doc.add_paragraph()
-                cap_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 cap_run = cap_para.add_run(cap_text)
-                cap_run.italic = True
                 _apply_font(cap_run, formatting)
                 _set_spacing(cap_para, formatting)
 
