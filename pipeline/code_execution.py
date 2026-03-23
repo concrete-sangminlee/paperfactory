@@ -27,13 +27,19 @@ def run(topic: str, design: dict, literature: dict, journal_guideline: dict, pro
     expected_figs = research_design.get("paper_outline", {}).get("expected_figures", [])
     expected_tables = research_design.get("paper_outline", {}).get("expected_tables", [])
 
-    code_prompt = f"""Write a complete Python research script for the following study.
+    # Build context from design, handling both parsed and raw designs
+    raw_design = research_design.get("raw_design", "")
+    objective = research_design.get("research_objective", "")
+    approach = methodology.get("approach", "")
 
-Topic: "{topic}"
-Research Objective: {research_design.get('research_objective', '')}
+    if raw_design and not objective:
+        # Design was not parsed as JSON, use raw text
+        design_context = f"Research Design:\n{raw_design[:3000]}"
+    else:
+        design_context = f"""Research Objective: {objective}
 
 Methodology:
-- Approach: {methodology.get('approach', '')}
+- Approach: {approach}
 - Steps: {json.dumps(methodology.get('steps', []), indent=2)}
 - ML Models: {json.dumps(methodology.get('ml_models', []), indent=2)}
 - Evaluation Metrics: {json.dumps(methodology.get('evaluation_metrics', []))}
@@ -44,21 +50,33 @@ Data Plan:
 - Splits: {json.dumps(data_plan.get('data_splits', {}))}
 
 Expected Figures: {json.dumps(expected_figs)}
-Expected Tables: {json.dumps(expected_tables)}
+Expected Tables: {json.dumps(expected_tables)}"""
+
+    # Add literature context
+    review = literature.get("review", {})
+    lit_context = review.get("suggested_methodology", "")
+
+    code_prompt = f"""Write a complete Python research script for the following study.
+
+Topic: "{topic}"
+{design_context}
+
+Literature-suggested approach: {lit_context[:500]}
 
 Requirements:
-1. Use publicly available datasets. If unavailable, generate realistic synthetic data.
-2. Save ALL figures to FIGURES_DIR with descriptive filenames (e.g., 'fig_1_model_architecture.png')
+1. Use publicly available datasets. If unavailable, generate REALISTIC synthetic data that simulates real structural engineering data.
+2. Save ALL figures to FIGURES_DIR with descriptive filenames (e.g., 'fig_1_model_performance.png')
 3. Save ALL result data to DATA_DIR as CSV or JSON
 4. Set matplotlib DPI=300, use tight_layout()
 5. Print all numerical results, metrics, and comparison tables to stdout
 6. Include proper error handling
-7. Use these packages only: numpy, pandas, scikit-learn, matplotlib, scipy, tensorflow/keras or pytorch (if needed)
+7. Use these packages only: numpy, pandas, scikit-learn, matplotlib, scipy (NO tensorflow, NO pytorch — use scikit-learn for ML)
 8. The script must be self-contained and runnable
+9. Generate at least 4 figures: data distribution, model comparison, confusion matrix, performance metrics
 
 Write ONLY the Python code. No markdown, no code blocks, no explanations."""
 
-    code = call_claude(code_prompt, system=SYSTEM_PROMPT, timeout=300)
+    code = call_claude(code_prompt, system=SYSTEM_PROMPT, timeout=600)
     code = _clean_code(code)
 
     results = {"code": code, "execution_attempts": [], "figures": [], "data_files": []}
@@ -100,7 +118,7 @@ Common fixes:
 - If a package is missing, use an alternative
 - Fix any import errors or typos"""
 
-            code = call_claude(fix_prompt, system=SYSTEM_PROMPT, timeout=300)
+            code = call_claude(fix_prompt, system=SYSTEM_PROMPT, timeout=600)
             code = _clean_code(code)
             results["code"] = code
 
