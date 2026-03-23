@@ -2,7 +2,7 @@
 
 AI-powered academic paper generator for structural engineering research.
 
-PaperFactory automates the full research-to-paper pipeline: **literature review → research design → code execution → result analysis → paper writing**. It generates journal-formatted Word documents targeting top structural engineering journals.
+PaperFactory is a **Claude Code native agent** that automates the full research-to-paper pipeline: **literature review → research design → code execution → result analysis → paper writing**. It generates journal-formatted Word documents targeting top structural engineering journals.
 
 ## Supported Journals
 
@@ -16,22 +16,22 @@ PaperFactory automates the full research-to-paper pipeline: **literature review 
 
 ## How It Works
 
-1. **Enter a research topic** — e.g., "Deep learning-based seismic damage detection in RC structures"
-2. **Select a target journal** — guidelines are automatically applied
-3. **Pipeline runs in 5 steps:**
-   - Literature Review (web search + gap analysis)
-   - Research Design (methodology + experiment plan)
-   - Code Execution (generates & runs Python research code)
-   - Result Analysis (scholarly interpretation)
-   - Paper Writing (full paper + Word export)
-4. **Review each step** or run in full auto mode
-5. **Download** the formatted `.docx` file
+1. Open Claude Code in this project directory
+2. Tell Claude your research topic and target journal
+3. Claude executes a 5-step pipeline:
+   - **Step 1** — Literature Review (real web search for papers)
+   - **Step 2** — Research Design (methodology + experiment plan)
+   - **Step 3** — Code Execution (writes & runs Python research code)
+   - **Step 4** — Result Analysis (scholarly interpretation)
+   - **Step 5** — Paper Writing (full paper + Word export)
+4. Review and approve each step (or request revisions)
+5. Get your formatted `.docx` file
 
 ## Requirements
 
-- **Python 3.10+**
 - **[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)** installed and authenticated
   - Requires an active Claude Code subscription (Max Plan recommended)
+- **Python 3.10+** with packages: `python-docx`, `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `scipy`
 
 ## Installation
 
@@ -44,16 +44,31 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-streamlit run app.py
+cd paperfactory
+claude
 ```
 
-Then open `http://localhost:8501` in your browser.
+Then just tell Claude what you want:
+
+```
+> "Deep learning-based seismic damage detection in RC structures" 주제로 Engineering Structures 저널에 낼 논문 써줘
+```
+
+Claude will execute each pipeline step, show you the results, and ask for approval before proceeding.
+
+## Example Topics
+
+- Deep learning-based seismic damage detection in reinforced concrete structures
+- Machine learning for wind load prediction on tall buildings
+- AI-driven structural health monitoring using sensor data
+- Neural network-based concrete strength prediction
+- Computer vision for crack detection in bridge structures
 
 ## Project Structure
 
 ```
 paperfactory/
-├── app.py                    # Streamlit web app
+├── CLAUDE.md                 # Agent instructions (pipeline definition)
 ├── requirements.txt
 ├── guidelines/               # Journal author guidelines (JSON)
 │   ├── asce_jse.json
@@ -61,26 +76,32 @@ paperfactory/
 │   ├── jweia.json
 │   ├── jbe.json
 │   └── eng_structures.json
-├── pipeline/
-│   ├── orchestrator.py       # Pipeline sequencer + approval gates
-│   ├── literature_review.py  # Step 1
-│   ├── research_design.py    # Step 2
-│   ├── code_execution.py     # Step 3
-│   ├── result_analysis.py    # Step 4
-│   └── paper_writing.py      # Step 5
 ├── utils/
-│   ├── claude_cli.py         # Claude Code CLI wrapper
+│   ├── claude_cli.py         # Claude Code CLI wrapper (for Streamlit fallback)
 │   ├── code_runner.py        # Python subprocess runner
 │   └── word_generator.py     # python-docx document builder
+├── pipeline/                 # Pipeline modules (for Streamlit fallback)
+│   ├── orchestrator.py
+│   ├── literature_review.py
+│   ├── research_design.py
+│   ├── code_execution.py
+│   ├── result_analysis.py
+│   └── paper_writing.py
+├── app.py                    # Streamlit web UI (optional alternative)
 └── outputs/
     ├── figures/              # Generated plots
     ├── data/                 # Result data files
     └── papers/               # Final .docx files
 ```
 
-## Configuration
+## Why Claude Code Native?
 
-Journal guidelines are stored as JSON in `guidelines/`. You can edit these files to fine-tune formatting, reference styles, or section structures.
+Unlike traditional web apps, PaperFactory runs as a Claude Code agent because:
+- **No timeouts** — Research code can run as long as needed
+- **Live debugging** — Claude fixes code errors immediately
+- **Real web search** — Native WebSearch tool for authentic literature review
+- **Interactive** — Review and revise each step in natural conversation
+- **Full capability** — Claude uses all its tools (Bash, Read, Write, WebSearch, etc.)
 
 ## Disclaimer
 
