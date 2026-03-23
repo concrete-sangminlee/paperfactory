@@ -140,6 +140,81 @@ def generate_word(paper_content: dict, journal_key: str, figures: list[str] = No
                 _apply_font(body_run, formatting)
                 _set_spacing(body_para, formatting)
 
+    # Tables
+    tables_data = paper_content.get("tables", [])
+    if tables_data:
+        doc.add_page_break()
+        tables_heading = doc.add_paragraph()
+        t_h_run = tables_heading.add_run("TABLES")
+        t_h_run.bold = True
+        _apply_font(t_h_run, formatting)
+
+        for tbl_info in tables_data:
+            # Table caption (above)
+            cap_para = doc.add_paragraph()
+            cap_run = cap_para.add_run(tbl_info.get("caption", ""))
+            cap_run.bold = True
+            _apply_font(cap_run, formatting)
+            cap_run.font.size = Pt(formatting.get("font_size", 12) - 1)
+            _set_spacing(cap_para, formatting)
+
+            headers = tbl_info.get("headers", [])
+            rows = tbl_info.get("rows", [])
+            if headers and rows:
+                n_cols = len(headers)
+                table = doc.add_table(rows=1 + len(rows), cols=n_cols)
+                table.style = 'Table Grid'
+
+                # Header row
+                for j, header in enumerate(headers):
+                    cell = table.rows[0].cells[j]
+                    cell.text = ""
+                    p = cell.paragraphs[0]
+                    run = p.add_run(header)
+                    run.bold = True
+                    run.font.name = formatting.get("font", "Times New Roman")
+                    run.font.size = Pt(formatting.get("font_size", 12) - 2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                # Data rows
+                for i, row in enumerate(rows):
+                    for j, val in enumerate(row):
+                        cell = table.rows[i + 1].cells[j]
+                        cell.text = ""
+                        p = cell.paragraphs[0]
+                        run = p.add_run(str(val))
+                        run.font.name = formatting.get("font", "Times New Roman")
+                        run.font.size = Pt(formatting.get("font_size", 12) - 2)
+                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                # Remove vertical borders (ASCE style: horizontal rules only)
+                from docx.oxml.ns import qn
+                tbl_xml = table._tbl
+                tbl_pr = tbl_xml.tblPr if tbl_xml.tblPr is not None else tbl_xml._add_tblPr()
+                borders = tbl_pr.find(qn('w:tblBorders'))
+                if borders is None:
+                    from docx.oxml import OxmlElement
+                    borders = OxmlElement('w:tblBorders')
+                    tbl_pr.append(borders)
+                for border_name in ['top', 'bottom', 'insideH']:
+                    b = borders.find(qn(f'w:{border_name}'))
+                    if b is None:
+                        from docx.oxml import OxmlElement
+                        b = OxmlElement(f'w:{border_name}')
+                        borders.append(b)
+                    b.set(qn('w:val'), 'single')
+                    b.set(qn('w:sz'), '4')
+                    b.set(qn('w:color'), '000000')
+                for border_name in ['left', 'right', 'insideV']:
+                    b = borders.find(qn(f'w:{border_name}'))
+                    if b is None:
+                        from docx.oxml import OxmlElement
+                        b = OxmlElement(f'w:{border_name}')
+                        borders.append(b)
+                    b.set(qn('w:val'), 'none')
+
+            doc.add_paragraph()  # spacing between tables
+
     # Figures
     fig_config = guideline.get("figures_tables", {})
     placement = fig_config.get("placement", "end of manuscript")
