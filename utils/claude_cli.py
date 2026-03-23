@@ -6,10 +6,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def call_claude(prompt: str, system: str = "", max_turns: int = 5, timeout: int = 300) -> str:
+def call_claude(
+    prompt: str,
+    system: str = "",
+    max_turns: int = 5,
+    timeout: int = 300,
+    allowed_tools: list[str] | None = None,
+) -> str:
     cmd = ["claude", "--print", "--output-format", "text", "--max-turns", str(max_turns)]
     if system:
         cmd += ["--system-prompt", system]
+    if allowed_tools:
+        cmd += ["--allowedTools", ",".join(allowed_tools)]
     cmd += ["-p", prompt]
 
     env = os.environ.copy()
