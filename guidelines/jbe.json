@@ -1,0 +1,88 @@
+{
+  "journal_name": "Journal of Building Engineering",
+  "abbreviation": "JBE",
+  "publisher": "Elsevier",
+  "scope": "Interdisciplinary journal covering all aspects of science and technology concerned with the whole life cycle of the built environment. Design, construction, operation, performance, maintenance, and deterioration. Topics include building materials, building pathology, energy efficiency, retrofit, structural analysis of buildings, fire safety, acoustics, HVAC, facade engineering, solar/lighting, BIM, smart buildings. Only publishes papers with significant scientific novelty. Excludes non-building infrastructure (roads, bridges, tunnels).",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Graphical Abstract",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "CRediT Author Statement",
+      "Declaration of Competing Interest",
+      "Data Availability Statement",
+      "Acknowledgements",
+      "References",
+      "Appendices",
+      "Figure Captions",
+      "Tables"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise and factual. State purpose, principal results, major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "1-7",
+    "keywords_note": "Written in English. Avoid multi-word keywords with and/of. Only established abbreviations.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. Separate editable file.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional but encouraged. Min 531 x 1328 pixels.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true,
+    "reviewer_suggestions": "3 independent referees with institutional emails, not from authors' institution"
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word (.doc/.docx) or LaTeX"
+  },
+  "references": {
+    "style": "Elsevier Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] S. Kim, J. Lee, Machine learning-based energy performance prediction for smart buildings, J. Build. Eng. 78 (2024) 107456.",
+      "[2] M. Angelou, I Know Why the Caged Bird Sings, 1st ed., Random House, New York, 1969.",
+      "[3] A.B. Author, Chapter title, in: C.D. Editor (Ed.), Book Title, Publisher, City, Year, pp. 100-120."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles sentence case, no quotes. Journal names italicized, abbreviated (ISO). More than 6 authors: list first 6 then et al.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "Separate files or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n} Description.",
+    "caption_position_figure": "below, listed in separate file",
+    "caption_position_table": "above",
+    "resolution_photo_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "color_note": "Free for online version.",
+    "table_rules": "No vertical rules, no shading. Footnotes below table body with superscript lowercase letters.",
+    "file_formats": ["TIFF", "JPEG", "PNG", "EPS", "PDF"],
+    "ai_artwork_note": "Use of generative AI for producing artwork is NOT permitted."
+  },
+  "submission_notes": {
+    "units": "SI units required throughout",
+    "equations": "Numbered consecutively, displayed separately from text",
+    "ethical_requirements": "Original work with significant scientific novelty. Not published or under review elsewhere.",
+    "data_availability": "Data availability statement required at submission",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "Technical Note"],
+    "review_type": "Single-anonymized (single-blind)",
+    "ai_disclosure": "AI use must be declared. AI never substitutes for human expertise. Generative AI for artwork not permitted.",
+    "submission_system": "Editorial Manager (https://www.editorialmanager.com/JBE)"
+  }
+}

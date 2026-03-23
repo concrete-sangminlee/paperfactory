@@ -1,0 +1,89 @@
+{
+  "journal_name": "ASCE Journal of Structural Engineering",
+  "abbreviation": "ASCE_JSE",
+  "publisher": "American Society of Civil Engineers",
+  "scope": "Art and science of structural modeling and design. Novel analytical, computational, and experimental simulation techniques. Proposal and evaluation of new structural systems; study of existing systems. Methods for maintenance, rehabilitation, and monitoring of existing structures. Properties of engineering materials as related to structural behavior. Contributions at the intersection of structural engineering and other disciplines including AI/ML.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Abstract",
+      "Practical Applications",
+      "Introduction",
+      "Main Body",
+      "Conclusion",
+      "Appendix",
+      "Data Availability Statement",
+      "Acknowledgments",
+      "Notation",
+      "Supplemental Materials",
+      "References"
+    ],
+    "abstract_word_limit": 300,
+    "abstract_word_minimum": 150,
+    "abstract_note": "Single paragraph, plain language, no math or references. Must include purpose, scope, procedures, and major findings.",
+    "max_manuscript_pages": 30,
+    "max_review_pages": 45,
+    "max_technical_note_pages": 7,
+    "title_max_characters": 100,
+    "title_note": "Should not begin with articles (A, The) or phrases like Analysis of, Theory of",
+    "keywords_note": "Applicable keywords for online search, reviewed against abstract",
+    "practical_applications": "150-200 words for non-academic audience describing results and potential applications",
+    "heading_format": {
+      "level_1": "ALL CAPITALS, bold, left-aligned",
+      "level_2": "Title Case, bold, left-aligned",
+      "level_3": "Sentence case, italicized, left-aligned",
+      "numbering": "Unnumbered (word headings only)"
+    }
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "1 inch all sides",
+    "page_size": "US Letter",
+    "page_numbers": true,
+    "line_numbers": true,
+    "paragraph_indent": "0.5 inch first line",
+    "text_alignment": "justified",
+    "footnotes": "Not permitted (except Journal of Legal Affairs)"
+  },
+  "references": {
+    "style": "ASCE Author-Date",
+    "format": "Author (Year) in text, no comma between name and year",
+    "list_format": "Alphabetical by first author surname",
+    "in_text_examples": {
+      "one_author": "(Smith 2004)",
+      "two_authors": "(Smith and Jones 2004)",
+      "three_plus": "(Fwa et al. 2004)"
+    },
+    "examples": [
+      "Beskos, D. E. 1987. \"Boundary element methods in dynamic analysis.\" Appl. Mech. Rev., 40 (1), 1-23. https://doi.org/10.1115/1.3149529.",
+      "Evans, G. M., and J. C. Furlong. 2003. Environmental biotechnology: Theory and applications. Chichester, UK: Wiley.",
+      "ACI (American Concrete Institute). 1989. Building code requirement for reinforced concrete. ACI 318-89. Farmington Hills, MI: ACI."
+    ],
+    "doi_required": true,
+    "journal_abbreviation_note": "Journal and conference titles abbreviated, Title Case. Article titles in quotation marks, sentence case. Book titles in italics."
+  },
+  "figures_tables": {
+    "placement": "Submitted as separate files, each on separate page",
+    "figure_caption_style": "Fig. {n}. Caption text in sentence case.",
+    "table_caption_style": "Table {n}. Title text in sentence case.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_dpi": 300,
+    "figure_font_size": 12,
+    "table_rules": "No vertical rules. Horizontal rules only at top, below headings, and at bottom.",
+    "color_note": "Color free online; print color incurs fees. Must be readable in black and white.",
+    "file_formats": ["TIFF", "EPS", "PDF"]
+  },
+  "submission_notes": {
+    "units": "SI units mandatory as primary. US customary may follow in parentheses.",
+    "equations": "Numbered sequentially, placed in body text only (never in figures or tables)",
+    "math_notation": "Italic for variables, bold for vectors/matrices. All symbols in Notation section.",
+    "notation_section": "Alphabetical: capitals before lowercase, Greek after English, non-alphabetical last. Definitions end with semicolons.",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Gender-neutral language required.",
+    "data_availability": "Mandatory, placed before Acknowledgments",
+    "manuscript_types": ["Technical Paper", "Case Study", "State-of-the-Art Review", "Technical Note", "Discussion"],
+    "file_format": "Microsoft Word or LaTeX"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "journal_name": "Journal of Wind Engineering and Industrial Aerodynamics",
+  "abbreviation": "JWEIA",
+  "publisher": "Elsevier",
+  "scope": "All aspects of wind engineering: wind effects on structures and buildings, bluff body aerodynamics, wind energy, atmospheric boundary layer, wind tunnel testing, computational wind engineering (CFD, LES), wind-induced vibrations, wind loads, pedestrian wind comfort, wind-driven rain, pollutant dispersion, codification of wind effects, aerodynamics of vehicles. Application of AI/ML for wind engineering problems.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Graphical Abstract",
+      "Highlights",
+      "Abstract",
+      "Keywords",
+      "Nomenclature",
+      "Introduction",
+      "Methodology",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise, factual, standalone summary. State purpose, principal results, and major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "1-7",
+    "keywords_note": "Written in English. Avoid multi-word keywords with and/of. Only established abbreviations.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces",
+    "graphical_abstract_required": true,
+    "graphical_abstract_note": "Mandatory. Preferred formats: TIFF, EPS, PDF, or MS Office files.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Times New Roman or Arial",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "file_format": "Word (.doc/.docx) or LaTeX. PDF not acceptable as source."
+  },
+  "references": {
+    "style": "Elsevier Numbered with Titles",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] S. Kim, J. Lee, Deep learning for wind load prediction on tall buildings, J. Wind Eng. Ind. Aerodyn. 234 (2024) 105632.",
+      "[2] J.D. Holmes, Wind Loading of Structures, third ed., CRC Press, Boca Raton, 2018.",
+      "[3] A.G. Davenport, The application of statistical concepts to the wind loading of structures, Proc. Inst. Civ. Eng. 19 (1961) 449-472."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Year) Pages. DOI required.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "embedded in text or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n} Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free for online. Use distinct patterns for grayscale print.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively, numbers in parentheses flush right",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere",
+    "data_availability": "Data availability statement expected",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "Letter"],
+    "review_type": "Single-anonymized (single-blind)",
+    "submission_system": "Editorial Manager (https://www.editorialmanager.com/INDAER)"
+  }
+}

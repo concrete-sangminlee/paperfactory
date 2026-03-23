@@ -1,0 +1,88 @@
+{
+  "journal_name": "ACI Structural Journal",
+  "abbreviation": "ACI_SJ",
+  "publisher": "American Concrete Institute",
+  "scope": "Analysis, design, behavior, and materials related to reinforced and prestressed concrete structures. Includes seismic design, shear and torsion, columns, slabs, foundations, bridges, FRP reinforcement, experimental and analytical investigations. Application of computational methods, AI, and data-driven approaches to concrete structural engineering.",
+  "manuscript_structure": {
+    "sections": [
+      "Title",
+      "Biographical Sketch of Authors",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Research Significance",
+      "Experimental/Analytical Program",
+      "Results and Discussion",
+      "Conclusions",
+      "Acknowledgments",
+      "References",
+      "Notation",
+      "Tables",
+      "Figure Captions",
+      "Figures"
+    ],
+    "abstract_word_limit": 150,
+    "abstract_note": "Concise statement of principal findings and conclusions. No references, figures, or tables cited.",
+    "title_max_characters": 70,
+    "keywords_count": "up to 9",
+    "research_significance_required": true,
+    "research_significance_limit": 100,
+    "research_significance_note": "Explains the significance of the work to the scientific community (max 100 words)",
+    "author_bio_limit": 75,
+    "max_word_equivalents": 12000,
+    "word_equivalent_note": "Each figure or table counts as 300 word-equivalents",
+    "heading_format": {
+      "major_headings": "Bold, uppercase"
+    }
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "1 inch all sides",
+    "page_size": "US Letter",
+    "page_numbers": true,
+    "page_number_position": "centered at bottom",
+    "text_alignment": "justified",
+    "footnotes": "Place at end of document, reference with asterisk (*). Do NOT use Word's automatic footnote.",
+    "language_note": "No first-person language (I, we, our). Use author, engineer, researcher."
+  },
+  "references": {
+    "style": "ACI Numbered",
+    "format": "Superscript numbers in text, before the period",
+    "list_format": "Numbered in order of citation",
+    "in_text_note": "Single: superscript 1; Multiple: superscript 1,2; Range: superscript 1-4",
+    "examples": [
+      "1. DiAmato, S., and Jenner, W., \"Mechanisms of Shear Resistance,\" ACI Structural Journal, V. 103, No. 1, Jan.-Feb. 2006, pp. 67-74.",
+      "2. ACI Committee 318, \"Building Code Requirements for Structural Concrete (ACI 318-19),\" American Concrete Institute, Farmington Hills, MI, 2019, 624 pp.",
+      "3. Park, R., and Paulay, T., Reinforced Concrete Structures, John Wiley & Sons, New York, 1975, 769 pp."
+    ],
+    "formatting_rules": "All info separated by commas. Titles in quotation marks. Journal/book names in italics. Each reference ends with period.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "Each on a separate page at end of manuscript",
+    "figure_caption_style": "Fig. {n}—Description",
+    "table_caption_style": "Table {n}—Description",
+    "caption_position_figure": "below, listed on separate page",
+    "caption_position_table": "above",
+    "figure_resolution_photo": 300,
+    "figure_resolution_line_art": 1200,
+    "figure_format": "TIFF preferred; JPEG discouraged",
+    "table_max_width": "150 mm (6 in.)",
+    "table_format": "Portrait, black and white, created in Word",
+    "color_note": "Color figures accepted.",
+    "file_formats": ["TIFF", "EPS"]
+  },
+  "submission_notes": {
+    "units": "Dual units required. Primary inch-pound with SI in parentheses, or vice versa.",
+    "equations": "Numbered sequentially",
+    "math_notation": "Italic for variables. Every symbol defined in Notation list.",
+    "ethical_requirements": "Original work. Copyright Transfer Agreement required from ALL authors before review.",
+    "file_format": "Microsoft Word (.doc or .docx) only. No LaTeX.",
+    "manuscript_types": ["Full Paper", "Technical Note", "Discussion"],
+    "discussion_deadline": "4 months after publication, max 1800 word-equivalents",
+    "ai_disclosure": "AI tools for language improvement only. Required acknowledgment text.",
+    "submission_system": "ScholarOne Manuscripts"
+  }
+}

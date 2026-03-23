@@ -1,0 +1,99 @@
+{
+  "journal_name": "Engineering Structures",
+  "abbreviation": "ENG_STRUCT",
+  "publisher": "Elsevier",
+  "scope": "Structural engineering across all material types (steel, concrete, timber, composites, masonry). Infrastructure engineering, earthquake engineering, structural dynamics, structure-fluid-soil interaction, wind engineering, fire engineering, blast engineering, structural reliability/stability, structural health monitoring, multi-hazard engineering, structural optimization, digital design methods, data-driven analysis, experimental methods, performance-based design, additive manufacturing, tall buildings, bridges, stadiums, smart structures.",
+  "manuscript_structure": {
+    "sections": [
+      "Title",
+      "Author Names and Affiliations",
+      "Abstract",
+      "Highlights",
+      "Keywords",
+      "Nomenclature",
+      "Introduction",
+      "Theory/Background",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "Declaration of Competing Interest",
+      "CRediT Author Statement",
+      "Data Availability Statement",
+      "Appendices",
+      "References"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise and factual. Must not exceed 250 words. State purpose, principal results, major conclusions. Avoid references.",
+    "keywords_count": "1-7",
+    "keywords_note": "Avoid keywords with multiple words using and/of.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional but encouraged",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true,
+    "novelty_note": "Manuscripts must clearly state novel contributions compared to existing literature",
+    "case_study_note": "Case studies and multi-part papers generally NOT accepted unless clear scientific innovation",
+    "review_article_note": "Review articles require prior proposal to Editors-in-Chief"
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word or LaTeX (Elsevier elsarticle.cls)",
+    "your_paper_your_way": "Flexible formatting for initial submission; strict formatting at revision stage"
+  },
+  "references": {
+    "style": "Elsevier Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] S. Kim, J. Lee, Convolutional neural network for seismic damage classification of RC structures, Eng. Struct. 289 (2024) 116234.",
+      "[2] A.K. Chopra, Dynamics of Structures: Theory and Applications to Earthquake Engineering, fifth ed., Pearson, Hoboken, NJ, 2020.",
+      "[3] EN 1998-1, Eurocode 8: Design of Structures for Earthquake Resistance – Part 1, European Committee for Standardization, Brussels, 2004."
+    ],
+    "formatting_rules": "Author surname then initials (no periods between initials). Article titles in regular text. Journal names in italics. Format: Journal Volume (Year) Pages. DOI highly encouraged.",
+    "doi_required": true,
+    "journal_abbreviation": "Eng. Struct."
+  },
+  "figures_tables": {
+    "placement": "Each figure as separate file",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below, provided in separate file",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free online; check for print color. Use RGB encoding.",
+    "table_rules": "No vertical rules, no shading.",
+    "file_formats": ["TIFF", "JPEG", "PNG", "EPS", "PDF"]
+  },
+  "submission_notes": {
+    "units": "SI units required. If other units used, SI equivalent must be provided.",
+    "equations": "Displayed separately, numbered consecutively: Eq. (1), Eq. (2). In appendices: Eq. (A.1).",
+    "math_notation": "Italic for scalar variables, bold for vectors/matrices",
+    "ethical_requirements": "Original unpublished work. All authors must use institutional/professional email.",
+    "data_availability": "Data availability statement required",
+    "author_list_note": "Author list frozen once submitted for initial review",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "Discussion"],
+    "review_type": "Single-anonymized peer review",
+    "ai_policy": "AI tools may support preparation but never substitute for human expertise. Authors fully responsible.",
+    "referee_suggestions": "Authors must name independent referees with institutional emails, not from own institution"
+  }
+}
