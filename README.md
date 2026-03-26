@@ -1,128 +1,317 @@
+<div align="center">
+
 # PaperFactory
 
-PaperFactory is an AI agent that automates research paper writing for structural engineering. It runs inside Claude Code CLI and executes a 5-step pipeline — literature review, research design, code execution, result analysis, and paper writing — entirely through natural conversation. The final output is a journal-formatted Word document (or LaTeX) ready for author review and submission.
+**AI agent that writes research papers for structural engineering.**
+
+Tell it your topic and target journal — it handles the rest.
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
+[![Tests](https://img.shields.io/badge/Tests-43%20Passing-brightgreen)](#project-structure)
+
+</div>
 
 ---
 
-## Requirements
+## What It Does
 
-- **Claude Code CLI**
-  ```bash
-  npm install -g @anthropic-ai/claude-code
-  ```
-- **Claude subscription** — Max Plan recommended (required for extended tool use and web search)
-- **Python 3.10+** with packages listed in `requirements.txt`
+PaperFactory is a **Claude Code native agent** that automates the full lifecycle of research paper writing — from literature search to a submission-ready manuscript. You have a natural conversation in your terminal: describe your research topic, pick a journal, and the agent executes a 5-step pipeline, asking for your approval at every stage.
 
----
+```
+You: "고층건물 풍압계수의 ML 예측" 주제로 JWEIA에 낼 논문 써줘
 
-## Installation
-
-```bash
-git clone https://github.com/concrete-sangminlee/paperfactory.git
-cd paperfactory
-pip install -r requirements.txt
-claude  # first time: will prompt for login
+PaperFactory: [searches 15+ real papers] → [designs methodology] → [writes & runs Python code]
+             → [analyzes results] → [generates JWEIA-formatted Word document]
 ```
 
 ---
 
-## Quick Start
+## How It Works
 
+```mermaid
+flowchart LR
+    A["**You**\nTopic + Journal"] --> B
+
+    subgraph PaperFactory["PaperFactory Pipeline"]
+        direction LR
+        B["Step 1\nLiterature\nReview"] --> C["Step 2\nResearch\nDesign"]
+        C --> D["Step 3\nCode\nExecution"]
+        D --> E["Step 4\nResult\nAnalysis"]
+        E --> F["Step 5\nPaper\nWriting"]
+    end
+
+    F --> G["**.docx / .tex**\nJournal-formatted\nManuscript"]
+
+    style A fill:#4A90D9,color:#fff,stroke:none
+    style G fill:#2ECC71,color:#fff,stroke:none
+    style B fill:#E8F4FD,stroke:#4A90D9
+    style C fill:#E8F4FD,stroke:#4A90D9
+    style D fill:#E8F4FD,stroke:#4A90D9
+    style E fill:#E8F4FD,stroke:#4A90D9
+    style F fill:#E8F4FD,stroke:#4A90D9
 ```
-$ cd paperfactory
-$ claude
 
-> "Machine learning-based prediction of wind pressure coefficients on high-rise buildings"
-  주제로 JWEIA 저널에 낼 논문 써줘
-```
+Each step runs inside Claude Code using native tools:
 
-Claude will then:
+| Step | What Happens | Tools Used |
+|:----:|:-------------|:-----------|
+| **1** | Searches Google Scholar, ScienceDirect for real papers. Collects 15+ references with DOIs. Identifies research gaps. | `WebSearch` `WebFetch` |
+| **2** | Designs hypothesis, methodology, experiment plan. Plans 6+ figures and 3+ tables. Checks journal scope fit. | `Read` (guidelines JSON) |
+| **3** | Writes Python code, executes it, auto-debugs errors (up to 5 retries). Generates publication-quality figures. | `Bash` `Write` |
+| **4** | Statistical interpretation, comparison with prior work, honest limitations. Drafts Results & Discussion. | `Read` (outputs) |
+| **5** | Assembles full manuscript per journal guidelines. Validates references. Exports Word (default) or LaTeX. | `utils/` |
 
-- **Step 1: Literature Review** — Searches Google Scholar and ScienceDirect for real papers on the topic. Collects at least 10 verified references with DOIs.
-- **Step 2: Research Design** — Proposes a research hypothesis, methodology, experiment plan, and expected figures/tables. Waits for your approval.
-- **Step 3: Code Execution** — Writes Python research code, runs it via Bash, debugs any errors automatically, and saves figures to `outputs/figures/` and data to `outputs/data/`.
-- **Step 4: Result Analysis** — Interprets the numerical results academically, compares against prior work, and drafts the Results and Discussion section.
-- **Step 5: Paper Writing** — Assembles the full manuscript following the journal's guidelines and exports a formatted `.docx` file to `outputs/papers/`.
-
-At each step, Claude shows you the output and asks for approval or revision requests before moving on.
+> **Human-in-the-loop**: After each step, you review the output and can request changes before proceeding.
 
 ---
 
 ## Supported Journals
 
+<table>
+<tr>
+<td>
+
 | Journal | Key | Field |
-|---------|-----|-------|
-| ASCE Journal of Structural Engineering | `asce_jse` | General Structural |
+|:--------|:----|:------|
+| ASCE J. Structural Engineering | `asce_jse` | Structural |
 | ACI Structural Journal | `aci_sj` | Concrete |
-| J. Wind Engineering and Industrial Aerodynamics | `jweia` | Wind |
-| Journal of Building Engineering | `jbe` | Building |
-| Engineering Structures | `eng_structures` | General Structural |
-| Earthquake Engineering and Structural Dynamics | `eesd` | Seismic |
+| J. Wind Eng. & Ind. Aerodynamics | `jweia` | Wind |
+| J. Building Engineering | `jbe` | Building |
+| Engineering Structures | `eng_structures` | Structural |
+
+</td>
+<td>
+
+| Journal | Key | Field |
+|:--------|:----|:------|
+| Earthquake Eng. & Struct. Dynamics | `eesd` | Seismic |
 | Thin-Walled Structures | `thin_walled` | Structural |
-| Cement and Concrete Composites | `cem_con_comp` | Concrete |
-| Computers and Structures | `comput_struct` | Computational |
+| Cement & Concrete Composites | `cem_con_comp` | Concrete |
+| Computers & Structures | `comput_struct` | Computational |
 | Automation in Construction | `autom_constr` | AI + Construction |
+
+</td>
+</tr>
+</table>
+
+Each journal has a detailed JSON guideline file in `guidelines/` covering: manuscript structure, formatting (font, spacing, margins), citation style, figure/table rules, and submission requirements.
 
 ---
 
-## Pipeline Overview
+## Quick Start
 
-**Step 1 — Literature Review**
-Reads the journal's guideline file, derives search keywords, and uses WebSearch to find real published papers. Verifies each paper's title, authors, year, journal, and DOI. Identifies research gaps and available datasets.
+### 1. Install
 
-**Step 2 — Research Design**
-Based on the literature, defines the paper title, research objective, hypothesis, methodology, and data plan. Produces a preliminary list of figures and tables aligned with the journal's scope.
+```bash
+# Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
 
-**Step 3 — Code Execution**
-Writes Python code using numpy, pandas, scikit-learn, matplotlib, and scipy. Runs the code directly via Bash. Fixes errors and reruns until successful. Generates at least 4 publication-quality figures (DPI 300).
+# Clone and set up PaperFactory
+git clone https://github.com/concrete-sangminlee/paperfactory.git
+cd paperfactory
+pip install -r requirements.txt
+```
 
-**Step 4 — Result Analysis**
-Interprets computational results in an academic context: statistical significance, comparison with baselines from literature, and honest discussion of limitations. Produces a draft Results and Discussion section.
+### 2. Run
 
-**Step 5 — Paper Writing and Word Export**
-Reads the journal's formatting guidelines from `guidelines/<key>.json`. Compiles all prior outputs into a complete manuscript. Calls `utils/word_generator.py` to produce the final `.docx` file.
+```bash
+claude
+```
+
+### 3. Tell it what you want
+
+```
+> "Deep learning-based seismic damage detection in RC frame structures" 주제로
+  Engineering Structures 저널에 낼 논문 써줘
+```
+
+Claude will execute the 5-step pipeline, showing results and asking for your approval at each step. The final `.docx` file appears in `outputs/papers/`.
+
+---
+
+## Example Topics
+
+<table>
+<tr>
+<td width="50%">
+
+**Wind Engineering**
+> CFD-validated ML model for across-wind response prediction of super-tall buildings above 300m
+
+**Seismic Engineering**
+> Deep learning-based rapid seismic damage assessment of RC frame structures using acceleration sensor data
+
+</td>
+<td width="50%">
+
+**Concrete**
+> Ensemble ML prediction of compressive strength of recycled aggregate concrete with fly ash and slag
+
+**AI + Structural**
+> Physics-informed neural network for real-time structural health monitoring of cable-stayed bridges
+
+</td>
+</tr>
+</table>
+
+---
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "CLAUDE.md"
+        direction TB
+        A["Agent Instructions\n5-step pipeline definition\nQuality criteria per step\nFailure handling"]
+    end
+
+    subgraph "guidelines/"
+        direction TB
+        B["10 Journal JSONs\nManuscript structure\nFormatting rules\nCitation styles"]
+    end
+
+    subgraph "utils/"
+        direction TB
+        C["word_generator.py\nJournal-formatted .docx"]
+        D["latex_generator.py\nJournal-formatted .tex + .bib"]
+        E["figure_utils.py\nStandardized matplotlib style"]
+        F["reference_utils.py\nDOI/format validation"]
+    end
+
+    subgraph "outputs/"
+        direction TB
+        G["figures/ — PNG plots"]
+        H["data/ — CSV results"]
+        I["papers/ — .docx / .tex"]
+    end
+
+    A --> |reads| B
+    A --> |calls| C
+    A --> |calls| D
+    A --> |calls| E
+    A --> |calls| F
+    C --> I
+    D --> I
+    E --> G
+
+    style A fill:#FFF3E0,stroke:#F57C00
+    style B fill:#E3F2FD,stroke:#1976D2
+    style C fill:#E8F5E9,stroke:#388E3C
+    style D fill:#E8F5E9,stroke:#388E3C
+    style E fill:#E8F5E9,stroke:#388E3C
+    style F fill:#E8F5E9,stroke:#388E3C
+    style G fill:#F3E5F5,stroke:#7B1FA2
+    style H fill:#F3E5F5,stroke:#7B1FA2
+    style I fill:#F3E5F5,stroke:#7B1FA2
+```
+
+---
+
+## Utilities
+
+PaperFactory includes Python utilities that Claude calls during the pipeline. They can also be used independently in your own research scripts.
+
+<details>
+<summary><b>figure_utils.py</b> — Publication-quality figure styling</summary>
+
+```python
+from utils.figure_utils import setup_style, save_figure, get_colors, get_figsize
+
+setup_style()                        # Times New Roman, DPI 300, inward ticks
+colors = get_colors()                # 8 distinct colors (B&W print safe)
+w, h = get_figsize("single")        # 3.5 x 2.8 in (single column)
+
+fig, ax = plt.subplots(figsize=get_figsize("double"))
+ax.plot(x, y, color=colors[0])
+save_figure(fig, "fig_1_model_comparison")   # → outputs/figures/
+```
+
+| Size Preset | Dimensions | Use Case |
+|:------------|:-----------|:---------|
+| `single` | 3.5 x 2.8 in | Single column figure |
+| `double` | 7.0 x 4.5 in | Full width figure |
+| `square` | 3.5 x 3.5 in | Correlation plots |
+
+</details>
+
+<details>
+<summary><b>word_generator.py</b> — Journal-formatted Word documents</summary>
+
+```python
+from utils.word_generator import generate_word
+
+paper_content = {
+    "title": "Paper Title",
+    "authors": "A. Author, B. Author",
+    "abstract": "Abstract text...",
+    "keywords": "keyword1; keyword2",
+    "sections": [
+        {"heading": "INTRODUCTION", "content": "...", "subsections": [
+            {"heading": "Background", "content": "..."},
+        ]},
+    ],
+    "tables": [{"caption": "Table 1.", "headers": ["A", "B"], "rows": [["1", "2"]]}],
+    "references": ["[1] Author, Title, Journal..."],
+    "data_availability": "Data available on request.",
+}
+
+output_path = generate_word(paper_content, "asce_jse", figures=["outputs/figures/fig1.png"])
+```
+
+</details>
+
+<details>
+<summary><b>latex_generator.py</b> — LaTeX + BibTeX output</summary>
+
+```python
+from utils.latex_generator import generate_latex
+
+tex_path, bib_path = generate_latex(paper_content, "eng_structures", figures=["fig1.png"])
+# → outputs/papers/Paper_Title_eng_structures.tex
+# → outputs/papers/Paper_Title.bib
+```
+
+Automatically selects document class: `elsarticle` (Elsevier), `ascelike` (ASCE), `article` (others).
+
+</details>
+
+<details>
+<summary><b>reference_utils.py</b> — Reference validation</summary>
+
+```python
+from utils.reference_utils import validate_references, check_duplicates
+
+issues = validate_references(refs, guideline)    # Missing DOI, year, etc.
+dupes = check_duplicates(refs)                   # Duplicate detection
+```
+
+</details>
 
 ---
 
 ## Usage Tips
 
-**Writing a good topic description**
+**Be specific with your topic** — the more precise, the better the output:
 
-| Less effective | More effective |
-|----------------|----------------|
+| Instead of... | Try... |
+|:--------------|:-------|
 | "ML for structures" | "Gradient boosting prediction of lateral drift in RC shear walls under cyclic loading" |
-| "Wind on buildings" | "CFD-validated ML model for across-wind response of super-tall buildings above 300 m" |
-| "Concrete strength" | "Ensemble ML prediction of compressive strength of recycled aggregate concrete with supplementary cementitious materials" |
+| "Wind on buildings" | "CFD-validated ML surrogate for across-wind response of super-tall buildings above 300m" |
 
-**Requesting revisions at any step**
-After Claude presents a step's output, you can say things like:
-- "Add two more references on LSTM-based structural monitoring."
-- "Change the methodology to use Random Forest instead of neural networks."
-- "The figures look fine. Proceed."
+**Request changes at any step** — Claude waits for your approval:
+- "Add more references on LSTM-based structural monitoring."
+- "Change methodology to Random Forest instead of neural networks."
+- "Figures look good. Proceed."
 
-**Output file locations**
-- Figures: `outputs/figures/`
-- Data and result tables: `outputs/data/`
-- Final paper: `outputs/papers/`
-
-**LaTeX output**
-By default, PaperFactory generates a Word (`.docx`) file. To get a LaTeX file instead, say: "Please generate the LaTeX version as well." Claude will use `utils/latex_generator.py`.
-
----
-
-## Example Topics by Field
-
-**Wind Engineering**
-"CFD-validated machine learning model for across-wind response prediction of super-tall buildings"
-
-**Seismic Engineering**
-"Deep learning-based rapid seismic damage assessment of RC frame structures using sensor data"
-
-**Concrete**
-"Ensemble ML prediction of compressive strength of recycled aggregate concrete with fly ash and slag"
-
-**AI and Structural Engineering**
-"Physics-informed neural network for real-time structural health monitoring of cable-stayed bridges"
+**Output locations:**
+| Type | Path |
+|:-----|:-----|
+| Figures | `outputs/figures/*.png` |
+| Data | `outputs/data/*.csv` |
+| Papers | `outputs/papers/*.docx` or `*.tex` |
 
 ---
 
@@ -130,56 +319,54 @@ By default, PaperFactory generates a Word (`.docx`) file. To get a LaTeX file in
 
 ```
 paperfactory/
-├── CLAUDE.md               # Agent instructions (pipeline definition)
+├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
-├── requirements.txt
-├── guidelines/             # Journal guidelines (10 JSON files)
-│   ├── asce_jse.json
-│   ├── aci_sj.json
-│   ├── jweia.json
-│   ├── jbe.json
-│   ├── eng_structures.json
-│   ├── eesd.json
-│   ├── thin_walled.json
-│   ├── cem_con_comp.json
-│   ├── comput_struct.json
-│   └── autom_constr.json
+├── requirements.txt        # python-docx, pandas, numpy, scikit-learn, matplotlib, scipy, seaborn
+├── guidelines/             # 10 journal guideline JSON files
 ├── utils/
-│   ├── word_generator.py
-│   ├── latex_generator.py
-│   ├── figure_utils.py
-│   └── reference_utils.py
-├── tests/
+│   ├── word_generator.py   # Word document builder
+│   ├── latex_generator.py  # LaTeX + BibTeX builder
+│   ├── figure_utils.py     # Matplotlib style standardization
+│   └── reference_utils.py  # Reference format validation
+├── tests/                  # 43 unit tests
 └── outputs/
-    ├── figures/
-    ├── data/
-    └── papers/
+    ├── figures/            # Generated plots (DPI 300)
+    ├── data/               # Result CSVs and JSONs
+    └── papers/             # Final .docx and .tex files
 ```
 
 ---
 
 ## Troubleshooting
 
-**"Claude Code not found" or `claude: command not found`**
-Run `npm install -g @anthropic-ai/claude-code` and ensure your Node.js `bin` directory is in your PATH.
+| Problem | Solution |
+|:--------|:---------|
+| `claude: command not found` | `npm install -g @anthropic-ai/claude-code` and add Node.js bin to PATH |
+| Authentication errors | Run `claude login` and follow the browser prompt |
+| `ModuleNotFoundError` | `pip install -r requirements.txt` (use a virtual environment) |
+| WebSearch not working | Allow web access when prompted. Requires Claude Max Plan. |
 
-**"Not logged in" or authentication errors**
-Run `claude login` and follow the browser prompt to authenticate with your Anthropic account.
+---
 
-**"Python package missing" or `ModuleNotFoundError`**
-Run `pip install -r requirements.txt` from the project root. Using a virtual environment is recommended.
+## Requirements
 
-**WebSearch returns no results or fails**
-Claude Code requires permission to use network tools. When prompted, allow web access. If the issue persists, check your Claude Code subscription plan — web search requires Max Plan or equivalent.
+- **[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)** — `npm install -g @anthropic-ai/claude-code`
+- **Claude subscription** — Max Plan recommended for web search and extended sessions
+- **Python 3.10+** — with `python-docx`, `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `scipy`, `seaborn`
+- **No API key needed** — Claude Code authenticates through your subscription
 
 ---
 
 ## Disclaimer
 
-Papers generated by PaperFactory are AI-assisted drafts. They require thorough human review, verification, and refinement before submission to any journal. Always validate research results, citations, numerical claims, and conclusions independently. The authors and contributors of this project are not responsible for the accuracy or fitness of any generated content.
+Papers generated by PaperFactory are AI-assisted drafts. They require thorough human review, verification, and refinement before submission. Always validate research results, citations, numerical claims, and conclusions independently.
 
 ---
 
-## License
+<div align="center">
 
-MIT License — see [LICENSE](LICENSE) for details.
+**MIT License** — see [LICENSE](LICENSE)
+
+Built with [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+
+</div>
