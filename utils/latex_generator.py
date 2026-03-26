@@ -40,11 +40,12 @@ def _escape_latex(text: str) -> str:
         if part.startswith("$") and part.endswith("$"):
             result.append(part)
         else:
-            escaped = part.replace("\\", r"\textbackslash{}")
+            escaped = part.replace("\\", "\x00BACKSLASH\x00")
             escaped = escaped.replace("{", r"\{").replace("}", r"\}")
             escaped = escaped.replace("$", r"\$")
             for char, replacement in _LATEX_SPECIAL.items():
                 escaped = escaped.replace(char, replacement)
+            escaped = escaped.replace("\x00BACKSLASH\x00", r"\textbackslash{}")
             result.append(escaped)
     return "".join(result)
 

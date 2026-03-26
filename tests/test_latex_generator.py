@@ -27,6 +27,32 @@ class TestEscapeLatex:
     def test_preserves_normal_text(self):
         assert _escape_latex("Hello world") == "Hello world"
 
+    def test_escapes_backslash(self):
+        assert _escape_latex("a\\b") == r"a\textbackslash{}b"
+
+    def test_escapes_curly_braces(self):
+        assert _escape_latex("{x}") == r"\{x\}"
+
+    def test_escapes_hash(self):
+        assert _escape_latex("#1") == r"\#1"
+
+    def test_escapes_tilde(self):
+        assert _escape_latex("~") == r"\textasciitilde{}"
+
+    def test_escapes_caret(self):
+        assert _escape_latex("^") == r"\textasciicircum{}"
+
+    def test_preserves_inline_math(self):
+        assert _escape_latex("value $\\alpha$ here") == r"value $\alpha$ here"
+
+    def test_escapes_dollar_outside_math(self):
+        assert _escape_latex("costs $5") == r"costs \$5"
+
+    def test_backslash_does_not_double_escape_braces(self):
+        result = _escape_latex("\\")
+        assert result == r"\textbackslash{}"
+        assert r"\textbackslash\{" not in result
+
 
 class TestGenerateLatex:
     def test_creates_tex_file(self, tmp_path):

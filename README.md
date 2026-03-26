@@ -402,16 +402,15 @@ paperfactory/
 ├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
 ├── requirements.txt        # python-docx, pandas, numpy, scikit-learn, matplotlib, scipy, seaborn
-├── .claude/
-│   ├── settings.json       # MCP server config template (PaperBanana)
-│   └── settings.local.json # Your API keys (gitignored)
+├── .mcp.json               # PaperBanana MCP config (create during setup, gitignored)
+├── .env                    # API keys (create during setup, gitignored)
 ├── guidelines/             # 10 journal guideline JSON files
 ├── utils/
 │   ├── word_generator.py   # Word document builder
 │   ├── latex_generator.py  # LaTeX + BibTeX builder
 │   ├── figure_utils.py     # Matplotlib style standardization
 │   └── reference_utils.py  # Reference format validation
-├── tests/                  # 43 unit tests
+├── tests/                  # Unit tests
 └── outputs/
     ├── figures/            # Generated plots (DPI 300)
     ├── data/               # Result CSVs and JSONs
