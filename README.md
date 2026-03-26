@@ -401,16 +401,23 @@ dupes = check_duplicates(refs)                   # Duplicate detection
 paperfactory/
 ├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
+├── LICENSE                 # MIT License
 ├── requirements.txt        # python-docx, pandas, numpy, scikit-learn, matplotlib, scipy, seaborn
 ├── .mcp.json               # PaperBanana MCP config (create during setup, gitignored)
 ├── .env                    # API keys (create during setup, gitignored)
 ├── guidelines/             # 10 journal guideline JSON files
 ├── utils/
+│   ├── __init__.py         # Package exports
 │   ├── word_generator.py   # Word document builder
 │   ├── latex_generator.py  # LaTeX + BibTeX builder
 │   ├── figure_utils.py     # Matplotlib style standardization
 │   └── reference_utils.py  # Reference format validation
-├── tests/                  # Unit tests
+├── tests/
+│   ├── conftest.py         # Shared test config (sys.path setup)
+│   ├── test_figure_utils.py
+│   ├── test_latex_generator.py
+│   ├── test_reference_utils.py
+│   └── test_word_generator.py
 └── outputs/
     ├── figures/            # Generated plots (DPI 300)
     ├── data/               # Result CSVs and JSONs

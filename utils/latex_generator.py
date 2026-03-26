@@ -29,15 +29,19 @@ _LATEX_SPECIAL = {
     "^": r"\textasciicircum{}",
 }
 
-_MATH_PATTERN = re.compile(r"(\$[^$]+\$)")
+_MATH_PATTERN = re.compile(r"(\$[^$\s][^$]*[^$\s]\$|\$[^$\s]\$)")
 
 
 def _escape_latex(text: str) -> str:
-    """Escape LaTeX special characters while preserving inline math ($...$)."""
+    """Escape LaTeX special characters while preserving inline math ($...$).
+
+    Inline math is detected as $<content>$ where content does not start or end
+    with whitespace (to avoid matching standalone dollar signs like "$5").
+    """
     parts = _MATH_PATTERN.split(text)
     result = []
     for part in parts:
-        if part.startswith("$") and part.endswith("$"):
+        if part.startswith("$") and part.endswith("$") and len(part) >= 3:
             result.append(part)
         else:
             escaped = part.replace("\\", "\x00BACKSLASH\x00")

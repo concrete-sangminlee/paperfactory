@@ -48,6 +48,11 @@ class TestEscapeLatex:
     def test_escapes_dollar_outside_math(self):
         assert _escape_latex("costs $5") == r"costs \$5"
 
+    def test_escapes_multiple_dollars_outside_math(self):
+        result = _escape_latex("costs $5, also $10 extra")
+        assert r"\$5" in result
+        assert r"\$10" in result
+
     def test_backslash_does_not_double_escape_braces(self):
         result = _escape_latex("\\")
         assert result == r"\textbackslash{}"
