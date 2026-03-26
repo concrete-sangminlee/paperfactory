@@ -11,6 +11,7 @@ Tell it your topic and target journal — it handles the rest.
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
 [![Tests](https://img.shields.io/badge/Tests-43%20Passing-brightgreen)](#project-structure)
+[![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
 
@@ -210,6 +211,48 @@ graph TB
 
 ---
 
+## PaperBanana Integration
+
+PaperFactory integrates with [PaperBanana](https://github.com/llmsresearch/paperbanana) to generate publication-quality **methodology diagrams** and **statistical plots** using AI. PaperBanana runs as an MCP server — Claude calls it directly during the pipeline.
+
+```mermaid
+flowchart LR
+    A["Step 3/5\nPaperFactory"] -->|"methodology text\n+ caption"| B["PaperBanana\nMCP Server"]
+    B -->|"high-quality\ndiagram PNG"| C["outputs/figures/\n→ Paper"]
+
+    style A fill:#E8F4FD,stroke:#4A90D9
+    style B fill:#FFF3E0,stroke:#F57C00
+    style C fill:#E8F5E9,stroke:#388E3C
+```
+
+**What it generates:**
+- Framework/architecture overview diagrams
+- Multi-agent pipeline illustrations
+- Statistical comparison plots from CSV data
+- Any academic figure described in natural language
+
+**Setup** (one-time, uses free Google Gemini API):
+
+1. Get a free API key at [Google AI Studio](https://aistudio.google.com/apikey)
+2. Copy `.claude/settings.json` to `.claude/settings.local.json`
+3. Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual key
+
+```json
+{
+  "mcpServers": {
+    "paperbanana": {
+      "command": "uvx",
+      "args": ["--from", "paperbanana[mcp]", "paperbanana-mcp"],
+      "env": { "GOOGLE_API_KEY": "your-actual-key" }
+    }
+  }
+}
+```
+
+Once configured, Claude will automatically use PaperBanana when methodology diagrams are needed.
+
+---
+
 ## Utilities
 
 PaperFactory includes Python utilities that Claude calls during the pipeline. They can also be used independently in your own research scripts.
@@ -322,6 +365,9 @@ paperfactory/
 ├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
 ├── requirements.txt        # python-docx, pandas, numpy, scikit-learn, matplotlib, scipy, seaborn
+├── .claude/
+│   ├── settings.json       # MCP server config template (PaperBanana)
+│   └── settings.local.json # Your API keys (gitignored)
 ├── guidelines/             # 10 journal guideline JSON files
 ├── utils/
 │   ├── word_generator.py   # Word document builder

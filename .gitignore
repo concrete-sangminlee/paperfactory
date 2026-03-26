@@ -28,3 +28,6 @@ venv/
 
 # Tests
 .pytest_cache/
+
+# Claude Code local settings (contains API keys)
+.claude/settings.local.json

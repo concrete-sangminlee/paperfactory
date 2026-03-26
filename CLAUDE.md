@@ -169,6 +169,48 @@ AI agent that automatically writes structural-engineering research papers: user 
 3. **디버깅 후 재시도**: 코드 실행 에러 시 직접 디버깅하고 수정하여 성공할 때까지 재시도한다 (최대 5회). 5회 초과 시 사용자에게 보고한다.
 4. **저널 가이드라인 준수**: 저널 가이드라인 JSON 파일의 포맷, 구조, 참고문헌 스타일을 충실히 따른다.
 5. **일관된 Figure 품질**: 모든 Figure는 `utils/figure_utils.py`를 통해 생성하여 일관된 학술 품질을 보장한다.
+6. **PaperBanana 다이어그램**: 논문의 methodology overview diagram이 필요할 때는 PaperBanana MCP 도구(`generate_diagram`)를 사용한다.
+
+---
+
+## PaperBanana Integration (학술 다이어그램 생성)
+
+PaperBanana는 MCP 서버로 연결되어 있으며, 논문에 필요한 고품질 학술 다이어그램을 AI로 자동 생성한다.
+
+### 사용 시점
+- **Step 2 (연구 설계)**: methodology overview diagram을 계획한다.
+- **Step 3 (코드 실행)**: 데이터 기반 statistical plot이 필요할 때 `generate_plot`을 사용한다.
+- **Step 5 (논문 작성)**: methodology 섹션에 들어갈 framework diagram을 `generate_diagram`으로 생성한다.
+
+### MCP 도구
+
+1. **`generate_diagram`** -- Methodology / framework diagram 생성
+   - `source_context`: 방법론 설명 텍스트
+   - `communicative_intent`: 그림 캡션 / 목적
+   - `optimize`: true (입력 최적화)
+   - 결과: 고품질 PNG 이미지
+
+2. **`generate_plot`** -- Statistical plot 생성
+   - `data`: CSV/JSON 데이터 경로
+   - `intent`: 플롯 목적 설명
+   - 결과: 학술 품질 통계 플롯
+
+3. **`evaluate_diagram`** -- 생성된 다이어그램 품질 평가
+   - `generated`: 생성된 이미지
+   - `reference`: 참고 이미지
+   - 4개 기준 평가: Faithfulness, Readability, Conciseness, Aesthetics
+
+### 사용 예시
+
+Step 5에서 methodology diagram 생성:
+```
+generate_diagram 도구를 사용하여:
+- source_context: "The proposed framework consists of three modules: (1) data preprocessing with wavelet decomposition, (2) feature extraction using CNN encoder, (3) prediction via gradient boosting ensemble..."
+- communicative_intent: "Overview of the proposed hybrid CNN-GBM framework for wind pressure prediction"
+- optimize: true
+```
+
+생성된 다이어그램은 `outputs/figures/`에 저장하고 논문 Figure로 포함한다.
 
 ---
 
