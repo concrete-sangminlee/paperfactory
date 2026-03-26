@@ -10,7 +10,7 @@ Tell it your topic and target journal — it handles the rest.
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
-[![Tests](https://img.shields.io/badge/Tests-52%20Passing-brightgreen)](#project-structure)
+[![Tests](https://img.shields.io/badge/Tests-79%20Passing-brightgreen)](#project-structure)
 [![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
@@ -370,6 +370,54 @@ dupes = check_duplicates(refs)                   # Duplicate detection
 
 </details>
 
+<details>
+<summary><b>quality_checker.py</b> — Automated paper quality validation</summary>
+
+```python
+from utils.quality_checker import check_paper
+
+result = check_paper(paper_content, "jweia", figures=figure_paths)
+print(result["summary"])
+# Quality Score: 100/100
+# Status: PASS
+# Checks: 11/11 passed
+```
+
+Validates against journal requirements and CLAUDE.md quality criteria:
+
+| Check | Severity | Threshold |
+|:------|:---------|:----------|
+| Abstract word count | Critical | Journal-specific limit |
+| Body word count | Critical | 6,000 words min |
+| Required sections | Critical | Introduction + Conclusions |
+| Reference count | Critical | 15 min |
+| Figure count | Critical | 6 min |
+| Recent references | Warning | 50% within 5 years |
+| Table count | Warning | 3 min |
+| Keywords | Warning | At least 1 |
+| Highlights | Warning | If required by journal |
+| Data availability | Info | Present/missing |
+
+</details>
+
+---
+
+## Demo
+
+A complete working example is included in `examples/demo_tpu_ml/`:
+
+```bash
+cd examples/demo_tpu_ml
+python generate_paper.py
+```
+
+Generates a full JWEIA paper on **ML-based peak wind pressure prediction** using the TPU database:
+- 8 publication-quality figures (DPI 300)
+- 4 tables with model comparison results
+- 20 real references with DOIs
+- JWEIA-formatted Word document
+- Automated quality report
+
 ---
 
 ## Usage Tips
@@ -411,7 +459,8 @@ paperfactory/
 │   ├── word_generator.py   # Word document builder
 │   ├── latex_generator.py  # LaTeX + BibTeX builder
 │   ├── figure_utils.py     # Matplotlib style standardization
-│   └── reference_utils.py  # Reference format validation
+│   ├── reference_utils.py  # Reference format validation
+│   └── quality_checker.py  # Automated paper quality validation
 ├── tests/
 │   ├── conftest.py         # Shared test config (sys.path setup)
 │   ├── test_figure_utils.py

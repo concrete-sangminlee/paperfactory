@@ -1,0 +1,96 @@
+{
+  "passed": false,
+  "score": 88,
+  "checks": [
+    {
+      "name": "abstract_word_count",
+      "passed": true,
+      "value": 178,
+      "limit": 250,
+      "severity": "critical",
+      "message": "Abstract: 178 words (limit: 250)"
+    },
+    {
+      "name": "body_word_count",
+      "passed": false,
+      "value": 3514,
+      "limit": 6000,
+      "severity": "critical",
+      "message": "Body: 3514 words (min: 6000)"
+    },
+    {
+      "name": "required_sections",
+      "passed": true,
+      "value": [
+        "INTRODUCTION",
+        "METHODOLOGY",
+        "RESULTS AND DISCUSSION",
+        "CONCLUSIONS"
+      ],
+      "missing": [],
+      "severity": "critical",
+      "message": "Sections: 4 found"
+    },
+    {
+      "name": "reference_count",
+      "passed": true,
+      "value": 20,
+      "limit": 15,
+      "severity": "critical",
+      "message": "References: 20 (min: 15)"
+    },
+    {
+      "name": "recent_references",
+      "passed": true,
+      "value": "80%",
+      "limit": "50%",
+      "severity": "warning",
+      "message": "Recent refs (last 5yr): 16/20 (80%)"
+    },
+    {
+      "name": "figure_count",
+      "passed": true,
+      "value": 8,
+      "limit": 6,
+      "severity": "critical",
+      "message": "Figures: 8 (min: 6)"
+    },
+    {
+      "name": "table_count",
+      "passed": true,
+      "value": 4,
+      "limit": 3,
+      "severity": "warning",
+      "message": "Tables: 4 (min: 3)"
+    },
+    {
+      "name": "keywords",
+      "passed": true,
+      "value": 7,
+      "severity": "warning",
+      "message": "Keywords: 7"
+    },
+    {
+      "name": "highlights",
+      "passed": true,
+      "value": 5,
+      "severity": "warning",
+      "message": "Highlights: 5 (required by journal)"
+    },
+    {
+      "name": "title",
+      "passed": true,
+      "value": 124,
+      "severity": "critical",
+      "message": "Title: 124 chars"
+    },
+    {
+      "name": "data_availability",
+      "passed": true,
+      "value": true,
+      "severity": "info",
+      "message": "Data availability: present"
+    }
+  ],
+  "summary": "Quality Score: 88/100\nStatus: FAIL\nChecks: 10/11 passed\nIssues:\n  [CRITICAL] Body: 3514 words (min: 6000)"
+}

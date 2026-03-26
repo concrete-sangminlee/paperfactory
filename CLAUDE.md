@@ -285,3 +285,17 @@ from utils.reference_utils import validate_references, check_duplicates
 issues = validate_references(references_list, guideline)  # format issues per ref
 duplicates = check_duplicates(references_list)             # duplicate detection
 ```
+
+### Quality Checker (`utils/quality_checker.py`)
+
+```python
+from utils.quality_checker import check_paper
+
+result = check_paper(paper_content, "jweia", figures=figure_paths)
+print(result["summary"])    # Quality Score: 100/100, Status: PASS
+print(result["passed"])     # True/False (all critical checks pass)
+print(result["score"])      # 0-100
+print(result["checks"])     # list of individual check results
+```
+
+Validates: abstract word count (journal limit), body word count (min 6,000), required sections, reference count (min 15), recent reference ratio (min 50%), figure count (min 6), table count (min 3), keywords, highlights (if required), title, data availability.
