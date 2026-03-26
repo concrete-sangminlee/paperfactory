@@ -231,22 +231,48 @@ flowchart LR
 - Statistical comparison plots from CSV data
 - Any academic figure described in natural language
 
-**Setup** (one-time, uses free Google Gemini API):
+### Supported Image Models (Nano Banana Family)
 
-1. Get a free API key at [Google AI Studio](https://aistudio.google.com/apikey)
-2. Copy `.claude/settings.json` to `.claude/settings.local.json`
-3. Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual key
+| Model | ID | Quality | Speed | Recommended |
+|:------|:---|:--------|:------|:------------|
+| Nano Banana | `gemini-2.5-flash-image` | Basic | Fast | |
+| Nano Banana 2 | `gemini-3.1-flash-image-preview` | Good | Fast | |
+| **Nano Banana Pro** | `gemini-3-pro-image-preview` | **Best** | Medium | **Yes** |
+
+### Setup
+
+> **Important**: A Google Cloud project with **billing enabled** (not free trial) is required. Free trial accounts are treated as free tier with `limit: 0` on image generation. [Upgrade to a full account](https://console.cloud.google.com/billing) — remaining free credits are preserved.
+
+1. Get an API key at [Google AI Studio](https://aistudio.google.com/apikey) — create it in a **billing-enabled project**
+2. Create `.mcp.json` in the project root (gitignored):
 
 ```json
 {
   "mcpServers": {
     "paperbanana": {
-      "command": "uvx",
-      "args": ["--from", "paperbanana[mcp]", "paperbanana-mcp"],
-      "env": { "GOOGLE_API_KEY": "your-actual-key" }
+      "command": ".venv/bin/paperbanana-mcp",
+      "args": [],
+      "env": { "GOOGLE_API_KEY": "your-api-key" }
     }
   }
 }
+```
+
+3. Install dependencies:
+
+```bash
+pip install "paperbanana[mcp] @ git+https://github.com/llmsresearch/paperbanana.git"
+```
+
+### CLI Usage (without MCP)
+
+```bash
+paperbanana generate \
+  --input method.txt \
+  --caption "Overview of the proposed framework" \
+  --vlm-model gemini-2.5-flash \
+  --image-model gemini-3-pro-image-preview \
+  --optimize --auto --aspect-ratio 16:9
 ```
 
 Once configured, Claude will automatically use PaperBanana when methodology diagrams are needed.
