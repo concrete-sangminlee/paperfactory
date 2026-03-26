@@ -213,23 +213,34 @@ graph TB
 
 ## PaperBanana Integration
 
-PaperFactory integrates with [PaperBanana](https://github.com/llmsresearch/paperbanana) to generate publication-quality **methodology diagrams** and **statistical plots** using AI. PaperBanana runs as an MCP server — Claude calls it directly during the pipeline.
+PaperFactory uses **two different tools** for figure generation depending on the type:
+
+| Figure Type | Tool | Examples |
+|:------------|:-----|:--------|
+| **Diagrams** | PaperBanana (Nano Banana Pro) | Methodology overview, framework architecture, pipeline illustration |
+| **Data plots & tables** | matplotlib + `figure_utils.py` | Scatter, box plot, contour, bar chart, time series, polar plot |
+
+> **Why the split?** AI image generation (PaperBanana) excels at conceptual diagrams but cannot render accurate numerical data — axis scales, data points, and legends will be wrong. Data-driven figures must be generated from code for reproducibility and accuracy.
 
 ```mermaid
 flowchart LR
-    A["Step 3/5\nPaperFactory"] -->|"methodology text\n+ caption"| B["PaperBanana\nMCP Server"]
-    B -->|"high-quality\ndiagram PNG"| C["outputs/figures/\n→ Paper"]
+    subgraph "Diagrams"
+        A1["Methodology text"] --> B1["PaperBanana\nNano Banana Pro"]
+        B1 --> C1["diagram.png"]
+    end
 
-    style A fill:#E8F4FD,stroke:#4A90D9
-    style B fill:#FFF3E0,stroke:#F57C00
-    style C fill:#E8F5E9,stroke:#388E3C
+    subgraph "Data Plots"
+        A2["Research data"] --> B2["matplotlib +\nfigure_utils.py"]
+        B2 --> C2["plot.png"]
+    end
+
+    C1 --> D["outputs/figures/\n→ Paper"]
+    C2 --> D
+
+    style B1 fill:#FFF3E0,stroke:#F57C00
+    style B2 fill:#E8F4FD,stroke:#4A90D9
+    style D fill:#E8F5E9,stroke:#388E3C
 ```
-
-**What it generates:**
-- Framework/architecture overview diagrams
-- Multi-agent pipeline illustrations
-- Statistical comparison plots from CSV data
-- Any academic figure described in natural language
 
 ### Supported Image Models (Nano Banana Family)
 
