@@ -1,0 +1,79 @@
+{
+  "journal_name": "Earthquake Engineering & Structural Dynamics",
+  "abbreviation": "EESD",
+  "publisher": "John Wiley & Sons",
+  "scope": "Structural and geotechnical earthquake engineering. Ground motions for analysis and design, geotechnical earthquake engineering, probabilistic and deterministic methods of dynamic analysis, experimental behaviour of structures, seismic protective systems, system identification, risk assessment, seismic code requirements, methods for earthquake-resistant design and retrofit of structures, AI and data-driven methods in earthquake engineering. Official journal of the International Association for Earthquake Engineering (IAEE).",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Main Body",
+      "Conclusions",
+      "Acknowledgements",
+      "Data Availability Statement",
+      "References"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise summary of the paper. State purpose, methods, principal results, and major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "4-7",
+    "keywords_note": "Provide keywords for indexing purposes, written in English",
+    "novelty_statement_required": true,
+    "novelty_statement_note": "All authors must supply a file describing in a bulleted list (less than 100 words) the new contributions of the paper to the field",
+    "highlights_required": false,
+    "graphical_abstract_required": false,
+    "heading_format": {
+      "level_1": "NUMBERED, ALL CAPITALS, bold (e.g., 6. CONCLUSIONS)",
+      "level_2": "Numbered, Italic (e.g., 3.4. Other earthquakes)",
+      "numbering": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "data_driven_policy": "Authors employing data-driven methods (ML, DL, AI) must comply with the journal Policy on Papers Utilizing Data-Driven Approaches",
+    "author_agreement": "Submitting author must provide a file confirming all named authors are aware of submission and have agreed"
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard (1 inch all sides)",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word (.doc/.docx) or LaTeX"
+  },
+  "references": {
+    "style": "Wiley Numbered",
+    "format": "Numbered in order of appearance, cited as [1], [2] in text",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "1. Boore DM, Atkinson GM. Ground-motion prediction equations for the average horizontal component of PGA, PGV and 5% damped SA at spectral periods between 0.1 s and 10.0 s. Earthquake Spectra 2008; 24(1):99-138.",
+      "2. Goovaerts P. Geostatistics for Natural Resources Evaluation. Oxford University Press: Oxford, New York, 1997.",
+      "3. Park J, Bazzurro P, Baker JW. Modeling spatial correlation of ground motion intensity measures for regional seismic hazard and portfolio loss estimation. Tenth International Conference on Application of Statistic and Probability in Civil Engineering (ICASP10), Tokyo, Japan, 2007."
+    ],
+    "formatting_rules": "Author surname then initials (no periods). Article titles in sentence case. Journal names in italics. Format: Journal Year; Volume(Issue):Pages. Book titles in italics. Publisher: City, Year.",
+    "doi_required": true,
+    "journal_abbreviation": "Earthquake Engng Struct. Dyn."
+  },
+  "figures_tables": {
+    "placement": "Separate files or end of manuscript",
+    "figure_caption_style": "Figure {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_dpi": 300,
+    "color_note": "Free colour reproduction where necessary for understanding. Colour illustrations reproduced without charge.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively, numbers in parentheses",
+    "math_notation": "Italic for scalar variables, bold for vectors/matrices",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Article", "Review Article", "Short Communication"],
+    "review_type": "Single-anonymized peer review",
+    "supporting_information": "Supporting information supplied as separate files",
+    "submission_system": "Research Exchange submission portal (Wiley)"
+  }
+}

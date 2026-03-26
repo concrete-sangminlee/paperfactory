@@ -1,0 +1,97 @@
+{
+  "journal_name": "Thin-Walled Structures",
+  "abbreviation": "TWS",
+  "publisher": "Elsevier",
+  "scope": "All aspects of thin-walled structures where problems arise due to the thinness of the walls. Cold-formed sections, plate and shell structures, reinforced plastics structures, aluminium structures, thin-walled nanostructures (2D X-enes such as graphene). Applications in aircraft, automotive, bridges, ships, oil rigs, storage vessels, industrial buildings, and warehouses. Theory, experiment, design, buckling, stability, vibration, energy absorption, finite element methods, residual stress, high-strength steel, composite thin-walled members. No restriction on construction type, material, or field of application provided the thin-walled criterion is satisfied.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Graphical Abstract",
+      "Abstract",
+      "Keywords",
+      "Nomenclature",
+      "Introduction",
+      "Theory/Background",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Declaration of Competing Interest",
+      "Declaration of Generative AI",
+      "Acknowledgements",
+      "Data Availability Statement",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise and factual. State purpose, principal results, major conclusions. Avoid references and non-standard abbreviations. Must not exceed 250 words.",
+    "keywords_count": "1-7",
+    "keywords_note": "Written in English. Avoid multi-word keywords with and/of. Only established abbreviations.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. Separate editable file.",
+    "graphical_abstract_required": true,
+    "graphical_abstract_note": "Mandatory. Summarize contents in concise pictorial form. Preferred formats: TIFF, EPS, PDF, or MS Office files.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true,
+    "author_list_note": "Author list frozen once submitted for initial review. Author changes after submission considered fraudulent and will result in rejection."
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word (.doc/.docx) or LaTeX (Elsevier elsarticle.cls)",
+    "your_paper_your_way": "Flexible formatting for initial submission; strict formatting at revision stage"
+  },
+  "references": {
+    "style": "Elsevier Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] M. Abambres, A. Rajana, K.D. Tsavdaridis, T.P. Ribeiro, Neural network-based formula for the buckling load prediction of I-section cellular steel beams, Thin-Walled Struct. 170 (2022) 108592.",
+      "[2] J. Rhodes, Design of Cold Formed Steel Members, Elsevier Applied Science, London, 1991.",
+      "[3] EN 1993-1-3, Eurocode 3: Design of Steel Structures – Part 1-3: General Rules – Supplementary Rules for Cold-Formed Members, European Committee for Standardization, Brussels, 2006."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text, sentence case. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Year) Pages. DOI highly encouraged.",
+    "doi_required": true,
+    "journal_abbreviation": "Thin-Walled Struct."
+  },
+  "figures_tables": {
+    "placement": "Each figure as separate file or embedded in text",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free online; check for print color. Use RGB encoding.",
+    "table_rules": "No vertical rules, no shading.",
+    "file_formats": ["TIFF", "JPEG", "PNG", "EPS", "PDF"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Displayed separately, numbered consecutively in parentheses flush right",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Paper", "Review Article", "Short Communication", "Technical Note", "Letter to the Editor"],
+    "review_type": "Single-anonymized peer review",
+    "ai_policy": "AI tools may support preparation but must be declared. AI never substitutes for human expertise.",
+    "discussion_policy": "Comments on published papers should be emailed directly to the Editor, NOT submitted via the electronic submission system",
+    "submission_system": "Editorial Manager"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "journal_name": "Cement and Concrete Composites",
+  "abbreviation": "CCC",
+  "publisher": "Elsevier",
+  "scope": "Current developments and advances in cement-concrete composites technology and in the production, use, and performance of cement-based construction materials. The word 'cement' includes Portland cement, blended cements, and other binding materials. Covers fiber-reinforced cement composites, polymer cement composites, polymer impregnated composites, ferrocement, cement composites with special aggregate inclusions or waste materials. Microstructure (as related to engineering properties), material properties, testing and test methods, fracture mechanics, durability, composite mechanics/technology, modelling, design, fabrication, and practical applications. Bridges materials science, engineering performance, environmental effects, in situ behavior, design/service life, and construction.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Declaration of Competing Interest",
+      "Declaration of Generative AI",
+      "CRediT Author Statement",
+      "Data Availability Statement",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Concise and factual. State purpose, principal results, and major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "1-7",
+    "keywords_note": "Written in English. Avoid multi-word keywords with and/of. Only established abbreviations.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. Capture novel results and new methods.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional but encouraged. Summarize contents in concise pictorial form.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word (.doc/.docx) or LaTeX (Elsevier elsarticle.cls)",
+    "your_paper_your_way": "Flexible formatting for initial submission; strict formatting at revision stage"
+  },
+  "references": {
+    "style": "Elsevier Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] V.C. Li, S. Wang, C. Wu, Tensile strain-hardening behavior of polyvinyl alcohol engineered cementitious composite (PVA-ECC), ACI Mater. J. 98 (6) (2001) 483-492.",
+      "[2] A.M. Neville, Properties of Concrete, fifth ed., Pearson, Harlow, 2011.",
+      "[3] ASTM C1609/C1609M-19a, Standard Test Method for Flexural Performance of Fiber-Reinforced Concrete, ASTM International, West Conshohocken, PA, 2019."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text, sentence case. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Issue) (Year) Pages. DOI highly encouraged. More than 6 authors: list first 6 then et al.",
+    "doi_required": true,
+    "journal_abbreviation": "Cem. Concr. Compos."
+  },
+  "figures_tables": {
+    "placement": "Each figure as separate file or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free online; check for print color. Use RGB encoding.",
+    "table_rules": "No vertical rules, no shading. Footnotes below table with superscript lowercase letters.",
+    "file_formats": ["TIFF", "JPEG", "PNG", "EPS", "PDF"]
+  },
+  "submission_notes": {
+    "units": "SI units required throughout",
+    "equations": "Displayed separately, numbered consecutively in parentheses",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Preprint posting on SSRN allowed.",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication"],
+    "review_type": "Single-anonymized peer review",
+    "ai_policy": "AI tools may support preparation but must be declared. Statement: 'During the preparation of this work the author(s) used [NAME OF TOOL] in order to [REASON].' Placed before references.",
+    "funding_disclosure": "Required in standardized format: 'Funding: This work was supported by [funder name] [grant numbers]'"
+  }
+}

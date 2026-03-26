@@ -1,0 +1,97 @@
+{
+  "journal_name": "Automation in Construction",
+  "abbreviation": "AIC",
+  "publisher": "Elsevier",
+  "scope": "All aspects pertaining to the use of Information Technologies in Design, Engineering, Construction Technologies, and Maintenance and Management of Constructed Facilities. Encompasses all stages of the construction life cycle from initial planning and design, through construction of the facility, its operation and maintenance, to the eventual dismantling and recycling of buildings and engineering structures. Topics include BIM, digital twins, computer vision, robotics in construction, AI/ML for construction management, 3D printing/additive manufacturing, IoT and sensor technologies, drone/UAV applications, augmented/virtual reality, natural language processing for construction documents, project scheduling optimization, safety monitoring, quality control automation, sustainable construction technologies.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Graphical Abstract",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Literature Review",
+      "Methodology",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Declaration of Competing Interest",
+      "Declaration of Generative AI",
+      "CRediT Author Statement",
+      "Data Availability Statement",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 150,
+    "abstract_note": "Concise and factual. Must not exceed 150 words. State purpose, principal results, and major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "1-7",
+    "keywords_note": "Written in English. Avoid multi-word keywords with and/of. Only established abbreviations.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. Capture novel results and new methods.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional but encouraged. Summarize contents in concise pictorial form designed to appeal to an interdisciplinary audience.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "layout": "single-column",
+    "file_format": "Word (.doc/.docx) or LaTeX (Elsevier elsarticle.cls)",
+    "your_paper_your_way": "Flexible formatting for initial submission; strict formatting at revision stage"
+  },
+  "references": {
+    "style": "Elsevier Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] H. Kim, K. Kim, H. Kim, Vision-based object detection and tracking for autonomous navigation of construction robots, Autom. Constr. 108 (2019) 102964.",
+      "[2] C.M. Eastman, P. Teicholz, R. Sacks, K. Liston, BIM Handbook: A Guide to Building Information Modeling for Owners, Managers, Designers, Engineers and Contractors, third ed., Wiley, Hoboken, NJ, 2018.",
+      "[3] S.C. Kang, H.L. Chi, E.Miranda, iWalk: Agent navigation using interactive and immersive augmented reality, in: Proc. Int. Symp. Autom. Robot. Constr. (ISARC), Seoul, Korea, 2011, pp. 586-591."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text, sentence case. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Year) Pages. DOI highly encouraged. More than 6 authors: list first 6 then et al.",
+    "doi_required": true,
+    "journal_abbreviation": "Autom. Constr."
+  },
+  "figures_tables": {
+    "placement": "Each figure as separate file or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free online; check for print color. Use RGB encoding.",
+    "table_rules": "No vertical rules, no shading.",
+    "file_formats": ["TIFF", "JPEG", "PNG", "EPS", "PDF"]
+  },
+  "submission_notes": {
+    "units": "SI units preferred",
+    "equations": "Displayed separately, numbered consecutively in parentheses",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Preprint posting on SSRN allowed.",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "Letter to the Editor"],
+    "review_type": "Single-anonymized peer review (minimum two reviewers)",
+    "ai_policy": "AI tools may support preparation but must be declared. Statement: 'During the preparation of this work the author(s) used [NAME OF TOOL] in order to [REASON].' Placed before references. Does not apply to basic tools (grammar, spelling, reference checkers).",
+    "discussion_policy": "Comments on published papers should be emailed directly to the Editor, NOT submitted via the electronic submission system",
+    "supporting_organizations": ["eCAADe", "IAARC", "C.I.B."],
+    "submission_system": "Editorial Manager"
+  }
+}
