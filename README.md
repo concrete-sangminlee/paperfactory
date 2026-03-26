@@ -10,7 +10,7 @@ Tell it your topic and target journal — it handles the rest.
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
-[![Tests](https://img.shields.io/badge/Tests-79%20Passing-brightgreen)](#project-structure)
+[![Tests](https://img.shields.io/badge/Tests-109%20Passing-brightgreen)](#project-structure)
 [![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
@@ -460,7 +460,10 @@ paperfactory/
 │   ├── latex_generator.py  # LaTeX + BibTeX builder
 │   ├── figure_utils.py     # Matplotlib style standardization
 │   ├── reference_utils.py  # Reference format validation
-│   └── quality_checker.py  # Automated paper quality validation
+│   ├── quality_checker.py  # Automated paper quality validation
+│   ├── table_utils.py      # Academic table styling + CSV export
+│   ├── pdf_generator.py    # Direct PDF output (no LaTeX needed)
+│   └── revision_tracker.py # Reviewer comment tracking + response letter
 ├── tests/
 │   ├── conftest.py         # Shared test config (sys.path setup)
 │   ├── test_figure_utils.py

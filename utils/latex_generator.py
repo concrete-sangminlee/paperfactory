@@ -211,20 +211,81 @@ def generate_latex(
         ref = ref.strip()
         if ref:
             clean_ref = re.sub(r"^\s*\[?\d+\]?\s*\.?\s*", "", ref)
+            fields = _parse_reference(clean_ref)
             bib_lines.append(f"@article{{ref{i},")
-            year_match = re.search(r"\b(19|20)\d{2}\b", clean_ref)
-            if year_match:
-                bib_lines.append(f"  year = {{{year_match.group()}}},")
-            doi_match = re.search(r"(10\.\d{4,}/[^\s,]+)", clean_ref)
-            if doi_match:
-                bib_lines.append(f"  doi = {{{doi_match.group()}}},")
-            bib_lines.append(f"  note = {{{clean_ref}}}")
+            for key in ("author", "title", "journal", "volume", "pages", "year", "doi"):
+                if fields.get(key):
+                    bib_lines.append(f"  {key} = {{{fields[key]}}},")
+            if not any(fields.get(k) for k in ("author", "title")):
+                bib_lines.append(f"  note = {{{clean_ref}}},")
             bib_lines.append("}")
             bib_lines.append("")
     with open(bib_path, "w", encoding="utf-8") as f:
         f.write("\n".join(bib_lines))
 
     return tex_path, bib_path
+
+
+def _parse_reference(ref_text: str) -> dict:
+    """Parse a reference string into BibTeX fields (best-effort heuristic)."""
+    fields = {}
+
+    # DOI
+    doi_match = re.search(r"(10\.\d{4,}/[^\s,]+)", ref_text)
+    if doi_match:
+        fields["doi"] = doi_match.group().rstrip(".")
+
+    # Year
+    year_match = re.search(r"\b((?:19|20)\d{2})\b", ref_text)
+    if year_match:
+        fields["year"] = year_match.group()
+
+    # Try to split "Authors, Title, Journal Vol (Year) Pages"
+    # Common pattern: "A.B. Name, C.D. Name, Title of paper, J. Name Vol (Year) Pages."
+    # Remove DOI/URL suffix for cleaner parsing
+    clean = re.sub(r"https?://\S+", "", ref_text).strip().rstrip(".")
+
+    # Split on comma-separated segments
+    parts = [p.strip() for p in clean.split(",")]
+
+    if len(parts) >= 3:
+        # Heuristic: author names typically contain initials (e.g., "A.B. Name")
+        author_parts = []
+        title_start = 0
+        for j, part in enumerate(parts):
+            # Author part: contains initials like "A." or "A.B."
+            if re.search(r"\b[A-Z]\.\s*[A-Z]?\.", part) or (j == 0 and re.search(r"\b[A-Z]\.", part)):
+                author_parts.append(part)
+                title_start = j + 1
+            else:
+                break
+
+        if author_parts:
+            fields["author"] = ", ".join(author_parts)
+
+        remaining = ", ".join(parts[title_start:])
+
+        # Extract title: text before "J. " or "Eng. " or volume pattern
+        title_match = re.match(
+            r"(.+?),\s*([A-Z][a-z]*[\.\s].*?(?:\d+\s*\(|\d{4}))",
+            remaining,
+        )
+        if title_match:
+            fields["title"] = title_match.group(1).strip()
+            journal_etc = title_match.group(2).strip()
+            # Extract journal name (before volume number)
+            jrnl_match = re.match(r"(.+?)\s+(\d+)", journal_etc)
+            if jrnl_match:
+                fields["journal"] = jrnl_match.group(1).strip().rstrip(".")
+                fields["volume"] = jrnl_match.group(2)
+            # Extract pages
+            pages_match = re.search(r"(\d+[-–]\d+|\d{5,})", remaining)
+            if pages_match:
+                fields["pages"] = pages_match.group().replace("–", "--")
+        elif title_start < len(parts):
+            fields["title"] = parts[title_start].strip()
+
+    return fields
 
 
 def _safe_filename(title: str) -> str:
