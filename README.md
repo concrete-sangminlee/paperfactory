@@ -10,7 +10,7 @@ Tell it your topic and target journal — it handles the rest.
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)](#project-structure)
+[![Tests](https://img.shields.io/badge/Tests-52%20Passing-brightgreen)](#project-structure)
 [![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
@@ -442,7 +442,7 @@ paperfactory/
 - **[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)** — `npm install -g @anthropic-ai/claude-code`
 - **Claude subscription** — Max Plan recommended for web search and extended sessions
 - **Python 3.10+** — with `python-docx`, `pandas`, `numpy`, `scikit-learn`, `matplotlib`, `scipy`, `seaborn`
-- **No API key needed** — Claude Code authenticates through your subscription
+- **Google API key** (optional) — only needed for PaperBanana diagram generation. Requires a [billing-enabled Google Cloud project](#setup). Not needed for the core paper-writing pipeline.
 
 ---
 
