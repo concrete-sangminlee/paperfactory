@@ -29,8 +29,12 @@ venv/
 # Tests
 .pytest_cache/
 
-# Claude Code local settings (contains API keys)
+# Claude Code settings (may contain API keys)
+.claude/settings.json
 .claude/settings.local.json
+
+# Internal development docs
+docs/superpowers/
 
 # MCP server config (contains API keys)
 .mcp.json

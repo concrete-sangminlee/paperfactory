@@ -1,10 +1,7 @@
 import os
-import sys
 import json
 import pytest
 from docx import Document
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.word_generator import generate_word, load_guideline
 
 MINIMAL_CONTENT = {

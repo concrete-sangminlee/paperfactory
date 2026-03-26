@@ -10,7 +10,7 @@ Tell it your topic and target journal — it handles the rest.
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
-[![Tests](https://img.shields.io/badge/Tests-43%20Passing-brightgreen)](#project-structure)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)](#project-structure)
 [![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
@@ -111,7 +111,7 @@ Each journal has a detailed JSON guideline file in `guidelines/` covering: manus
 npm install -g @anthropic-ai/claude-code
 
 # Clone and set up PaperFactory
-git clone https://github.com/concrete-sangminlee/paperfactory.git
+git clone https://github.com/concrete-sangminlee/paperfactory.git paperfactory
 cd paperfactory
 pip install -r requirements.txt
 ```

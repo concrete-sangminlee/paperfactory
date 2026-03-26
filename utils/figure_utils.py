@@ -33,7 +33,11 @@ _FIGSIZES = {
 
 
 def setup_style():
-    """Apply publication-quality matplotlib style. Call once at top of script."""
+    """Apply publication-quality matplotlib style. Call once at top of script.
+
+    Uses Times New Roman with DejaVu Serif as fallback for Linux/CI environments
+    where Times New Roman is not installed.
+    """
     plt.rcParams.update({
         "font.family": ["serif"],
         "font.serif": ["Times New Roman", "DejaVu Serif"],

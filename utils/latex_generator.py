@@ -23,21 +23,29 @@ _DOCUMENT_CLASSES = {
 _LATEX_SPECIAL = {
     "&": r"\&",
     "%": r"\%",
-    "$": r"\$",
     "#": r"\#",
     "_": r"\_",
-    "{": r"\{",
-    "}": r"\}",
     "~": r"\textasciitilde{}",
     "^": r"\textasciicircum{}",
 }
 
+_MATH_PATTERN = re.compile(r"(\$[^$]+\$)")
+
 
 def _escape_latex(text: str) -> str:
-    """Escape LaTeX special characters in text."""
+    """Escape LaTeX special characters while preserving inline math ($...$)."""
+    parts = _MATH_PATTERN.split(text)
     result = []
-    for char in text:
-        result.append(_LATEX_SPECIAL.get(char, char))
+    for part in parts:
+        if part.startswith("$") and part.endswith("$"):
+            result.append(part)
+        else:
+            escaped = part.replace("\\", r"\textbackslash{}")
+            escaped = escaped.replace("{", r"\{").replace("}", r"\}")
+            escaped = escaped.replace("$", r"\$")
+            for char, replacement in _LATEX_SPECIAL.items():
+                escaped = escaped.replace(char, replacement)
+            result.append(escaped)
     return "".join(result)
 
 
@@ -107,6 +115,8 @@ def generate_latex(
     lines.append(
         r"\bibliographystyle{elsarticle-num}"
         if doc_class == "elsarticle"
+        else r"\bibliographystyle{ascelike}"
+        if doc_class == "ascelike"
         else r"\bibliographystyle{plain}"
     )
     lines.append("")
@@ -197,6 +207,12 @@ def generate_latex(
         if ref:
             clean_ref = re.sub(r"^\s*\[?\d+\]?\s*\.?\s*", "", ref)
             bib_lines.append(f"@article{{ref{i},")
+            year_match = re.search(r"\b(19|20)\d{2}\b", clean_ref)
+            if year_match:
+                bib_lines.append(f"  year = {{{year_match.group()}}},")
+            doi_match = re.search(r"(10\.\d{4,}/[^\s,]+)", clean_ref)
+            if doi_match:
+                bib_lines.append(f"  doi = {{{doi_match.group()}}},")
             bib_lines.append(f"  note = {{{clean_ref}}}")
             bib_lines.append("}")
             bib_lines.append("")

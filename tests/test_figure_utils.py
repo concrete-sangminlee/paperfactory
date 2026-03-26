@@ -1,11 +1,8 @@
 import os
-import sys
 import pytest
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.figure_utils import setup_style, save_figure, get_colors, get_figsize
 
 

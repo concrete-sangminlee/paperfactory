@@ -1,8 +1,5 @@
 import os
-import sys
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.latex_generator import generate_latex, _get_document_class, _escape_latex
 
 

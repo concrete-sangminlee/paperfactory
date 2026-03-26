@@ -1,9 +1,6 @@
 import os
-import sys
 import json
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.reference_utils import validate_references, check_duplicates, detect_citation_style
 
 GUIDELINES_DIR = os.path.join(os.path.dirname(__file__), "..", "guidelines")
