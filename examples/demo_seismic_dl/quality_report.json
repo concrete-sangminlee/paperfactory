@@ -1,22 +1,22 @@
 {
-  "passed": false,
-  "score": 75,
+  "passed": true,
+  "score": 100,
   "checks": [
     {
       "name": "abstract_word_count",
       "passed": true,
-      "value": 125,
+      "value": 151,
       "limit": 250,
       "severity": "critical",
-      "message": "Abstract: 125 words (limit: 250)"
+      "message": "Abstract: 151 words (limit: 250)"
     },
     {
       "name": "body_word_count",
-      "passed": false,
-      "value": 465,
+      "passed": true,
+      "value": 6016,
       "limit": 6000,
       "severity": "critical",
-      "message": "Body: 465 words (min: 6000)"
+      "message": "Body: 6016 words (min: 6000)"
     },
     {
       "name": "required_sections",
@@ -34,18 +34,18 @@
     {
       "name": "reference_count",
       "passed": true,
-      "value": 15,
+      "value": 22,
       "limit": 15,
       "severity": "critical",
-      "message": "References: 15 (min: 15)"
+      "message": "References: 22 (min: 15)"
     },
     {
       "name": "recent_references",
-      "passed": false,
-      "value": "27%",
+      "passed": true,
+      "value": "50%",
       "limit": "50%",
       "severity": "warning",
-      "message": "Recent refs (last 5yr): 4/15 (27%)"
+      "message": "Recent refs (last 5yr): 11/22 (50%)"
     },
     {
       "name": "figure_count",
@@ -66,16 +66,16 @@
     {
       "name": "keywords",
       "passed": true,
-      "value": 5,
+      "value": 7,
       "severity": "warning",
-      "message": "Keywords: 5"
+      "message": "Keywords: 7"
     },
     {
       "name": "highlights",
-      "passed": false,
-      "value": 0,
+      "passed": true,
+      "value": 5,
       "severity": "warning",
-      "message": "Highlights: 0 (required by journal)"
+      "message": "Highlights: 5 (required by journal)"
     },
     {
       "name": "title",
@@ -92,5 +92,5 @@
       "message": "Data availability: present"
     }
   ],
-  "summary": "Quality Score: 75/100\nStatus: FAIL\nChecks: 8/11 passed\nIssues:\n  [CRITICAL] Body: 465 words (min: 6000)\n  [WARNING] Recent refs (last 5yr): 4/15 (27%)\n  [WARNING] Highlights: 0 (required by journal)"
+  "summary": "Quality Score: 100/100\nStatus: PASS\nChecks: 11/11 passed"
 }
