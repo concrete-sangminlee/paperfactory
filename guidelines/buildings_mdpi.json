@@ -1,0 +1,85 @@
+{
+  "journal_name": "Buildings",
+  "abbreviation": "Buildings",
+  "publisher": "MDPI (Multidisciplinary Digital Publishing Institute)",
+  "scope": "Building science and technology, structural engineering of buildings, smart buildings and IoT, construction technology and management, building information modeling (BIM), energy efficiency and green buildings, seismic performance of buildings, building materials, indoor environmental quality, building acoustics, fire safety, heritage building conservation, prefabricated and modular construction, AI/ML applications in building engineering.",
+  "manuscript_structure": {
+    "sections": [
+      "Title",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Materials and Methods",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Author Contributions",
+      "Funding",
+      "Data Availability Statement",
+      "Conflicts of Interest",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 200,
+    "abstract_note": "A single paragraph summarizing the research. Should state the main objective, methods, results, and conclusions. Avoid citations and undefined abbreviations.",
+    "keywords_count": "3-10",
+    "keywords_note": "Listed alphabetically. Use specific, relevant terms not already in the title.",
+    "highlights_required": false,
+    "highlights_note": "Not required.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Not required but optional.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1. Headings bold."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Palatino Linotype",
+    "font_size": 10,
+    "line_spacing": "single",
+    "margins": "standard MDPI template",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": false,
+    "file_format": "Word (.docx) using MDPI template, or LaTeX using MDPI template. Submission via online system."
+  },
+  "references": {
+    "style": "MDPI Author-Date Numbered",
+    "format": "Numbered in square brackets [1] in order of appearance. In-text citations use numbers.",
+    "list_format": "Numbered in order of citation. Full journal names (not abbreviated).",
+    "examples": [
+      "[1] Kim, S.; Lee, J. Deep Learning for Seismic Response Prediction of Building Structures. Buildings 2024, 14, 1523.",
+      "[2] Chopra, A.K. Dynamics of Structures: Theory and Applications to Earthquake Engineering, 5th ed.; Pearson: Hoboken, NJ, USA, 2017.",
+      "[3] Park, H.; Choi, S.; Kim, T. BIM-Based Automated Structural Design Optimization for Tall Buildings. Automation in Construction 2023, 145, 104632."
+    ],
+    "formatting_rules": "Author surname, initials separated by semicolons. Article title in sentence case. Journal name in italics, full name (not abbreviated). Year, volume, article number or page range. DOI required. Use MDPI reference style.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "embedded in text near first citation",
+    "figure_caption_style": "Figure {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 600,
+    "figure_widths": {
+      "single_column": "85 mm",
+      "double_column": "180 mm"
+    },
+    "text_in_figures_pt": 8,
+    "color_note": "Open access: color figures free of charge. All figures published in full color online.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively in parentheses. Use MathType, Word equation editor, or LaTeX.",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. MDPI ethical guidelines apply. ORCID recommended for all authors.",
+    "data_availability": "Data availability statement mandatory. Use standard statements from MDPI template.",
+    "manuscript_types": ["Article", "Review", "Communication", "Brief Report", "Editorial"],
+    "review_type": "Single-anonymized (single-blind), open review option available",
+    "submission_system": "MDPI Submission System (https://susy.mdpi.com)"
+  }
+}

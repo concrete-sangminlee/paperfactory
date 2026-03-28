@@ -9,8 +9,8 @@ Tell it your topic and target journal — it handles the rest.
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Native%20Agent-E87A3A?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Journals](https://img.shields.io/badge/Journals-10%20Supported-blue)](#supported-journals)
-[![Tests](https://img.shields.io/badge/Tests-109%20Passing-brightgreen)](#project-structure)
+[![Journals](https://img.shields.io/badge/Journals-15%20Supported-blue)](#supported-journals)
+[![Tests](https://github.com/concrete-sangminlee/paperfactory/actions/workflows/tests.yml/badge.svg)](https://github.com/concrete-sangminlee/paperfactory/actions/workflows/tests.yml)
 [![PaperBanana](https://img.shields.io/badge/PaperBanana-Diagram%20AI-FF6B35?logo=google&logoColor=white)](https://github.com/llmsresearch/paperbanana)
 
 </div>
@@ -93,6 +93,25 @@ Each step runs inside Claude Code using native tools:
 | Cement & Concrete Composites | `cem_con_comp` | Concrete |
 | Computers & Structures | `comput_struct` | Computational |
 | Automation in Construction | `autom_constr` | AI + Construction |
+
+</td>
+</tr>
+<tr>
+<td>
+
+| Journal | Key | Field |
+|:--------|:----|:------|
+| Structural Safety | `struct_safety` | Reliability |
+| Construction & Building Materials | `const_build_mat` | Materials |
+| J. Constructional Steel Research | `steel_comp_struct` | Steel |
+
+</td>
+<td>
+
+| Journal | Key | Field |
+|:--------|:----|:------|
+| KSCE J. Civil Engineering | `ksce_jce` | General (Korean) |
+| Buildings (MDPI) | `buildings_mdpi` | Open Access |
 
 </td>
 </tr>
@@ -450,20 +469,26 @@ paperfactory/
 ├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
 ├── LICENSE                 # MIT License
-├── requirements.txt        # python-docx, pandas, numpy, scikit-learn, matplotlib, scipy, seaborn
+├── app.py                  # Streamlit web UI (streamlit run app.py)
+├── requirements.txt        # Dependencies
 ├── .mcp.json               # PaperBanana MCP config (create during setup, gitignored)
 ├── .env                    # API keys (create during setup, gitignored)
-├── guidelines/             # 10 journal guideline JSON files
+├── guidelines/             # 15 journal guideline JSON files
+├── pipeline/
+│   └── orchestrator.py     # 5-step pipeline state management
 ├── utils/
-│   ├── __init__.py         # Package exports
 │   ├── word_generator.py   # Word document builder
-│   ├── latex_generator.py  # LaTeX + BibTeX builder
+│   ├── latex_generator.py  # LaTeX + BibTeX builder (smart BibTeX parser)
+│   ├── pdf_generator.py    # Direct PDF output (no LaTeX needed)
 │   ├── figure_utils.py     # Matplotlib style standardization
+│   ├── table_utils.py      # Academic table styling + CSV export
 │   ├── reference_utils.py  # Reference format validation
 │   ├── quality_checker.py  # Automated paper quality validation
-│   ├── table_utils.py      # Academic table styling + CSV export
-│   ├── pdf_generator.py    # Direct PDF output (no LaTeX needed)
-│   └── revision_tracker.py # Reviewer comment tracking + response letter
+│   ├── submission_utils.py # Submission checklist, cover letter, journal reformatting
+│   ├── ai_reviewer.py      # Pre-submission peer review simulation
+│   ├── research_advisor.py # Statistical test + figure type recommender
+│   ├── revision_tracker.py # Reviewer comment tracking + response letter
+│   └── data_sources.py     # Public research database connectors
 ├── tests/
 │   ├── conftest.py         # Shared test config (sys.path setup)
 │   ├── test_figure_utils.py

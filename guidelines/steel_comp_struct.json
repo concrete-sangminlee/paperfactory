@@ -1,0 +1,85 @@
+{
+  "journal_name": "Journal of Constructional Steel Research",
+  "abbreviation": "J. Constr. Steel Res.",
+  "publisher": "Elsevier",
+  "scope": "Steel structures, steel-concrete composite structures, stainless steel structures, aluminum alloy structures, cold-formed steel, connections and joints, stability and buckling, fire engineering of steel structures, fatigue and fracture, seismic behavior of steel structures, tubular structures, steel bridges, castellated and cellular beams, thin-walled structures in steel, robustness and progressive collapse, AI/ML for steel structural analysis and design.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Abstract",
+      "Keywords",
+      "Nomenclature",
+      "Introduction",
+      "Methodology",
+      "Results",
+      "Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "A concise summary of the work. State the objectives, principal methods, key results, and main conclusions. Do not include references or undefined abbreviations.",
+    "keywords_count": "4-8",
+    "keywords_note": "Specific keywords representing the main content. Avoid general terms and terms from the title where possible.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. State the core findings clearly.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional. If provided, use TIFF, EPS, PDF, or MS Office format.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Times New Roman or Arial",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "file_format": "Word (.doc/.docx) or LaTeX (elsarticle class). PDF not acceptable as source."
+  },
+  "references": {
+    "style": "Elsevier Numbered with Titles",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] L. Gardner, D.A. Nethercot, Experiments on stainless steel hollow sections - Part 1: Material and cross-sectional behaviour, J. Constr. Steel Res. 60 (2004) 1291-1318.",
+      "[2] N.S. Trahair, M.A. Bradford, D.A. Nethercot, L. Gardner, The Behaviour and Design of Steel Structures to EC3, fourth ed., Taylor & Francis, London, 2008.",
+      "[3] B. Uy, Strength of short concrete filled high strength steel box columns, J. Constr. Steel Res. 57 (2001) 113-134."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Year) Pages. DOI required.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "embedded in text or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n} Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free color for online publication. Ensure figures are distinguishable in grayscale for print.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively, numbers in parentheses flush right",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Declaration of competing interest required.",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "State-of-the-Art Review"],
+    "review_type": "Single-anonymized (single-blind)",
+    "submission_system": "Editorial Manager (https://www.editorialmanager.com/JCSR)"
+  }
+}

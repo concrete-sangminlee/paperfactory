@@ -1,0 +1,83 @@
+{
+  "journal_name": "Construction and Building Materials",
+  "abbreviation": "Constr. Build. Mater.",
+  "publisher": "Elsevier",
+  "scope": "Construction materials science, concrete technology, cement and cementitious composites, sustainable and green building materials, recycled and waste materials in construction, geopolymers, fiber-reinforced concrete, asphalt and bituminous materials, timber engineering, masonry, durability and service life, non-destructive testing of materials, 3D printing for construction, nanomaterials in construction, AI/ML for material property prediction.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Highlights",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Materials and Methods",
+      "Results and Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 200,
+    "abstract_note": "A concise summary not exceeding 200 words. State the purpose, experimental approach, principal findings, and major conclusions. Avoid references and abbreviations.",
+    "keywords_count": "4-6",
+    "keywords_note": "Specific, avoiding general and plural terms. Use lowercase except proper nouns.",
+    "highlights_required": true,
+    "highlights_note": "3-5 bullet points, max 85 characters each including spaces. Summarize key findings.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Optional but recommended. If provided, use TIFF, EPS, PDF, or MS Office format.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": true
+  },
+  "formatting": {
+    "font": "Times New Roman or Arial",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "standard",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": true,
+    "file_format": "Word (.doc/.docx) or LaTeX (elsarticle class). PDF not acceptable as source."
+  },
+  "references": {
+    "style": "Elsevier Numbered with Titles",
+    "format": "Numbered in square brackets [1] in order of appearance",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] B.A. Tayeh, R. Alyousef, H. Alabduljabbar, A. Alaskar, Recycled aggregate in concrete: A review, J. Constr. Build. Mater. 272 (2021) 121462.",
+      "[2] P.K. Mehta, P.J.M. Monteiro, Concrete: Microstructure, Properties, and Materials, fourth ed., McGraw-Hill, New York, 2014.",
+      "[3] J.L. Provis, J.S.J. van Deventer, Alkali Activated Materials: State-of-the-Art Report, RILEM TC 224-AAM, Springer, Dordrecht, 2014."
+    ],
+    "formatting_rules": "Author initials then surname. Article titles in regular text. Journal names in italics and abbreviated (ISO). Format: Journal Volume (Year) Pages/Article number. DOI required.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "embedded in text or end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n} Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "90 mm",
+      "one_half_column": "140 mm",
+      "double_column": "190 mm"
+    },
+    "text_in_figures_pt": 7,
+    "color_note": "Free color for online publication. Figures should remain readable in grayscale.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively with numbers in parentheses at right margin",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Conflict of interest disclosure required.",
+    "data_availability": "Data availability statement required",
+    "manuscript_types": ["Research Paper", "Review Paper", "Short Communication", "Technical Note"],
+    "review_type": "Single-anonymized (single-blind)",
+    "submission_system": "Editorial Manager (https://www.editorialmanager.com/JCBM)"
+  }
+}

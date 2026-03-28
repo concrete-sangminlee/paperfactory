@@ -1,6 +1,21 @@
 # PaperFactory -- AI Research Paper Agent
 
-AI agent that automatically writes structural-engineering research papers: user provides a **topic** + **target journal**, and the agent executes a 5-step pipeline from literature review to final manuscript export.
+AI agent that automatically writes civil engineering research papers: user provides a **topic** + **target journal**, and the agent executes a 5-step pipeline from literature review to final manuscript export.
+
+## Supported Fields
+
+구조공학을 중심으로, 아래 토목공학 세부 분야를 지원합니다:
+- **구조공학**: RC 구조, 강구조, 합성구조, 내진설계, 풍공학
+- **건설관리/자동화**: AI 기반 건설 자동화, 스마트 건설
+- **건축재료**: 콘크리트, 강재, 복합재, 지속가능 건축자재
+- **구조 신뢰성**: 확률론적 안전성 평가, 리스크 분석
+- **건물공학**: 에너지 효율, 실내환경, 건물 성능
+
+## Language Support
+
+- **English papers**: 기본 모드 — 모든 저널 지원
+- **한국어 논문**: KCI 저널 (KSCE 등) 대상, 한국어 본문 + 영문 초록 형태 지원
+- 사용자와의 대화는 항상 **한국어**, 논문 내용은 저널 언어에 맞춤
 
 ## Usage
 
@@ -20,6 +35,11 @@ AI agent that automatically writes structural-engineering research papers: user 
 | Cement and Concrete Composites | `cem_con_comp` | `guidelines/cem_con_comp.json` |
 | Computers & Structures | `comput_struct` | `guidelines/comput_struct.json` |
 | Automation in Construction | `autom_constr` | `guidelines/autom_constr.json` |
+| Structural Safety | `struct_safety` | `guidelines/struct_safety.json` |
+| Construction and Building Materials | `const_build_mat` | `guidelines/const_build_mat.json` |
+| KSCE Journal of Civil Engineering | `ksce_jce` | `guidelines/ksce_jce.json` |
+| Buildings (MDPI) | `buildings_mdpi` | `guidelines/buildings_mdpi.json` |
+| J. Constructional Steel Research | `steel_comp_struct` | `guidelines/steel_comp_struct.json` |
 
 ---
 
@@ -147,10 +167,18 @@ AI agent that automatically writes structural-engineering research papers: user 
 **Output Format**
 - 기본: Word (.docx) -- `utils/word_generator.py`
 - 선택: LaTeX (.tex + .bib) -- `utils/latex_generator.py`
+- 선택: PDF (.pdf) -- `utils/pdf_generator.py`
+
+**Post-Generation**
+- `utils/quality_checker.py`의 `check_paper()`로 품질 검증을 실행한다.
+- `utils/submission_utils.py`의 `submission_checklist()`로 투고 준비 상태를 확인한다.
+- 저널이 graphical abstract를 요구하면, PaperBanana `generate_diagram`으로 생성한다.
+- `generate_cover_letter()`로 에디터 커버레터를 자동 생성한다.
 
 **Failure Handling**
-- Word/LaTeX 생성 에러 시 에러 로그를 확인하고 paper_content 구조를 수정하여 재시도한다.
+- Word/LaTeX/PDF 생성 에러 시 에러 로그를 확인하고 paper_content 구조를 수정하여 재시도한다.
 - 참고문헌 검증 실패 시 해당 항목을 수정하거나 제외한다.
+- Reject 후 다른 저널 재투고 시, `reformat_paper()`로 포맷을 변환한다.
 
 ---
 

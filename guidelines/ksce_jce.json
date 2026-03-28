@@ -1,0 +1,81 @@
+{
+  "journal_name": "KSCE Journal of Civil Engineering",
+  "abbreviation": "KSCE J. Civ. Eng.",
+  "publisher": "Springer (Korean Society of Civil Engineers)",
+  "scope": "All areas of civil engineering including structural engineering, geotechnical engineering, transportation engineering, water resources engineering, environmental engineering, construction management, surveying and geo-spatial engineering, tunnel engineering, coastal and harbor engineering, earthquake engineering, bridge engineering, AI and smart infrastructure. Open to Korean and international researchers.",
+  "manuscript_structure": {
+    "sections": [
+      "Title Page",
+      "Abstract",
+      "Keywords",
+      "Introduction",
+      "Methodology",
+      "Results and Discussion",
+      "Conclusions",
+      "Acknowledgements",
+      "References",
+      "Appendices"
+    ],
+    "abstract_word_limit": 250,
+    "abstract_note": "Should state briefly the purpose, methods, principal results, and major conclusions. Avoid references and non-standard abbreviations.",
+    "keywords_count": "4-6",
+    "keywords_note": "Select terms that best represent the content. Avoid terms already used in the title.",
+    "highlights_required": false,
+    "highlights_note": "Not required.",
+    "graphical_abstract_required": false,
+    "graphical_abstract_note": "Not required.",
+    "heading_format": {
+      "style": "Numbered sections: 1., 1.1., 1.1.1."
+    },
+    "credit_author_statement": false
+  },
+  "formatting": {
+    "font": "Times New Roman",
+    "font_size": 12,
+    "line_spacing": "double",
+    "margins": "25 mm all sides",
+    "page_size": "A4",
+    "page_numbers": true,
+    "line_numbers": false,
+    "file_format": "Word (.doc/.docx) or LaTeX (Springer article class). PDF for review only."
+  },
+  "references": {
+    "style": "Springer Numbered",
+    "format": "Numbered in order of appearance, cited as [1], [2], etc.",
+    "list_format": "Numbered in order of citation",
+    "examples": [
+      "[1] Park, R. and Paulay, T. (1975). Reinforced Concrete Structures, John Wiley & Sons, New York, NY, USA.",
+      "[2] Kim, S., Lee, J., and Park, H. (2023). \"Machine learning-based seismic damage prediction for RC buildings.\" KSCE Journal of Civil Engineering, Vol. 27, No. 5, pp. 2145-2158, DOI: 10.1007/s12205-023-1234-5.",
+      "[3] ACI Committee 318 (2019). Building Code Requirements for Structural Concrete (ACI 318-19), American Concrete Institute, Farmington Hills, MI, USA."
+    ],
+    "formatting_rules": "Author surname then initials. Year in parentheses. Article titles in double quotes. Journal names in italics. Volume and pages required. DOI required where available.",
+    "doi_required": true
+  },
+  "figures_tables": {
+    "placement": "embedded in text or at end of manuscript",
+    "figure_caption_style": "Fig. {n}. Description.",
+    "table_caption_style": "Table {n}. Description.",
+    "caption_position_figure": "below",
+    "caption_position_table": "above",
+    "resolution_halftone_dpi": 300,
+    "resolution_combination_dpi": 500,
+    "resolution_line_art_dpi": 1000,
+    "figure_widths": {
+      "single_column": "84 mm",
+      "double_column": "174 mm"
+    },
+    "text_in_figures_pt": 8,
+    "color_note": "Color figures available online. Additional charges may apply for color in print.",
+    "file_formats": ["TIFF", "EPS", "PDF", "JPEG", "PNG"]
+  },
+  "submission_notes": {
+    "units": "SI units required",
+    "equations": "Numbered consecutively in parentheses at right margin",
+    "math_notation": "MathType or Word equation editor, or LaTeX math environments",
+    "ethical_requirements": "Original unpublished work, not under review elsewhere. Conflict of interest statement required.",
+    "data_availability": "Data availability statement encouraged",
+    "manuscript_types": ["Research Paper", "Technical Note", "Review Paper", "Discussion"],
+    "review_type": "Single-anonymized (single-blind)",
+    "submission_system": "Editorial Manager (https://www.editorialmanager.com/ksce)"
+  }
+}

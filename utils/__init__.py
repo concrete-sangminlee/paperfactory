@@ -6,3 +6,7 @@ from utils.quality_checker import check_paper
 from utils.table_utils import create_table_figure, save_table_csv, format_number, format_mean_std
 from utils.pdf_generator import generate_pdf
 from utils.revision_tracker import create_revision, address_comment, generate_response_letter, track_changes
+from utils.submission_utils import submission_checklist, generate_cover_letter, reformat_paper
+from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
+from utils.ai_reviewer import review_paper
+from utils.data_sources import list_sources, get_source, suggest_sources
