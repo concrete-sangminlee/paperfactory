@@ -590,7 +590,12 @@ paperfactory/
 │   ├── ai_reviewer.py      # Pre-submission peer review simulation
 │   ├── research_advisor.py # Statistical test + figure type recommender
 │   ├── revision_tracker.py # Reviewer comment tracking + response letter
-│   └── data_sources.py     # Public research database connectors
+│   ├── data_sources.py     # Public research database connectors
+│   ├── citation_converter.py # Numbered/author-date/APA style conversion
+│   ├── template_system.py  # 4 paper templates (ML, experimental, numerical, review)
+│   ├── paper_analytics.py  # Readability scores, vocabulary, section balance
+│   ├── abstract_generator.py # Auto-generate/improve abstracts
+│   └── bibtex_import.py    # Import .bib files into paper_content
 ├── tests/
 │   ├── conftest.py         # Shared test config (sys.path setup)
 │   ├── test_figure_utils.py

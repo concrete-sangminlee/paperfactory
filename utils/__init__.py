@@ -12,3 +12,6 @@ from utils.ai_reviewer import review_paper
 from utils.data_sources import list_sources, get_source, suggest_sources
 from utils.citation_converter import convert_style
 from utils.template_system import list_templates, get_template, generate_skeleton
+from utils.paper_analytics import analyze_paper
+from utils.abstract_generator import generate_abstract, improve_abstract
+from utils.bibtex_import import import_bib, parse_bib_string
