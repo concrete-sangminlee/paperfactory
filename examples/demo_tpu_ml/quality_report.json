@@ -1,6 +1,6 @@
 {
-  "passed": false,
-  "score": 88,
+  "passed": true,
+  "score": 100,
   "checks": [
     {
       "name": "abstract_word_count",
@@ -12,11 +12,11 @@
     },
     {
       "name": "body_word_count",
-      "passed": false,
-      "value": 3514,
+      "passed": true,
+      "value": 6004,
       "limit": 6000,
       "severity": "critical",
-      "message": "Body: 3514 words (min: 6000)"
+      "message": "Body: 6004 words (min: 6000)"
     },
     {
       "name": "required_sections",
@@ -92,5 +92,5 @@
       "message": "Data availability: present"
     }
   ],
-  "summary": "Quality Score: 88/100\nStatus: FAIL\nChecks: 10/11 passed\nIssues:\n  [CRITICAL] Body: 3514 words (min: 6000)"
+  "summary": "Quality Score: 100/100\nStatus: PASS\nChecks: 11/11 passed"
 }

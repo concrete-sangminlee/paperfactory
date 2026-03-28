@@ -419,23 +419,125 @@ Validates against journal requirements and CLAUDE.md quality criteria:
 
 </details>
 
----
 
-## Demo
+<details>
+<summary><b>submission_utils.py</b> — Submission workflow (checklist, cover letter, reformat)</summary>
 
-A complete working example is included in `examples/demo_tpu_ml/`:
+```python
+from utils.submission_utils import submission_checklist, generate_cover_letter, reformat_paper
 
-```bash
-cd examples/demo_tpu_ml
-python generate_paper.py
+# Pre-submission checklist
+result = submission_checklist(paper_content, "jweia", figures=figure_paths)
+print("Ready:", result["ready"])
+
+# Generate cover letter
+letter = generate_cover_letter(paper_content, "jweia", editor_name="Prof. Smith")
+
+# Reformat for different journal after rejection
+new_content = reformat_paper(paper_content, from_journal="jweia", to_journal="eng_structures")
 ```
 
-Generates a full JWEIA paper on **ML-based peak wind pressure prediction** using the TPU database:
-- 8 publication-quality figures (DPI 300)
-- 4 tables with model comparison results
-- 20 real references with DOIs
-- JWEIA-formatted Word document
-- Automated quality report
+</details>
+
+<details>
+<summary><b>ai_reviewer.py</b> — Pre-submission peer review simulation</summary>
+
+```python
+from utils.ai_reviewer import review_paper
+
+result = review_paper(paper_content, "jweia")
+print(result["decision"])   # "Accept with minor revisions"
+print(result["summary"])    # Detailed review with major/minor issues
+```
+
+Checks: structural completeness, introduction quality (gap analysis), methodology detail, results comparison, novelty statement, reference recency, figure/table adequacy.
+
+</details>
+
+<details>
+<summary><b>research_advisor.py</b> — Statistical test + figure type advisor</summary>
+
+```python
+from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
+
+# Statistical test recommendations
+recs = recommend_statistical_tests(data, groups=labels)
+# → [{"test": "One-way ANOVA", "rationale": "Normal data, 3+ groups", ...}]
+
+# Figure type recommendations
+figs = recommend_figure_type(data, data_type="continuous", comparison="groups")
+# → [{"type": "Box plot", "best_for": "Comparing distributions", "code": "ax.boxplot(...)"}]
+```
+
+</details>
+
+<details>
+<summary><b>data_sources.py</b> — Public research database connectors</summary>
+
+```python
+from utils.data_sources import suggest_sources, list_sources, get_source
+
+# Suggest relevant databases for your topic
+sources = suggest_sources("wind pressure prediction on low-rise buildings")
+# → [{"name": "TPU Aerodynamic Database", "url": "...", "relevance_score": 5}, ...]
+
+# List all databases for a field
+wind_dbs = list_sources("wind_engineering")
+```
+
+Includes: TPU, PEER NGA-West2, CESMD, NIST, DesignSafe, K-NET/KiK-net, COSMOS.
+
+</details>
+
+---
+
+## Pipeline Orchestrator
+
+```python
+from pipeline import PaperPipeline
+
+# Start new pipeline
+pipeline = PaperPipeline("ML wind pressure prediction", "jweia")
+print(pipeline.show_status())
+
+# Complete steps with outputs
+pipeline.complete_step(references=[...])
+pipeline.complete_step(research_design={...})
+
+# Resume from saved state
+pipeline = PaperPipeline.resume("outputs/papers/run_xxx/pipeline_state.json")
+```
+
+## Web UI
+
+```bash
+pip install streamlit
+streamlit run app.py
+```
+
+5 tabs: Pipeline, Quality Check, AI Review, Data Sources, Submission Prep.
+
+---
+
+## Demos
+
+Two complete working examples are included:
+
+### 1. Wind Engineering (JWEIA)
+
+```bash
+cd examples/demo_tpu_ml && python generate_paper.py
+```
+
+ML-based peak wind pressure prediction using TPU database — 8 figures, 4 tables, 20 refs, Word output, quality 100/100.
+
+### 2. Seismic Engineering (Engineering Structures)
+
+```bash
+cd examples/demo_seismic_dl && python generate_paper.py
+```
+
+DL-based seismic damage assessment of RC frames — 6 figures, 3 tables, 22 refs, Word + PDF output, quality 100/100.
 
 ---
 
