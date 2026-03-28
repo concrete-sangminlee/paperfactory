@@ -7,13 +7,18 @@ import os
 import re
 
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import mm, inch
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch, mm
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle,
-    PageBreak, KeepTogether,
+    Image,
+    KeepTogether,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
 )
 from reportlab.platypus.flowables import HRFlowable
 
@@ -26,53 +31,109 @@ def _build_styles():
     """Create publication-quality paragraph styles."""
     styles = getSampleStyleSheet()
 
-    styles.add(ParagraphStyle(
-        "PaperTitle", parent=styles["Title"],
-        fontSize=16, leading=20, spaceAfter=6, alignment=TA_CENTER,
-        fontName="Times-Bold",
-    ))
-    styles.add(ParagraphStyle(
-        "Authors", parent=styles["Normal"],
-        fontSize=11, leading=14, alignment=TA_CENTER,
-        fontName="Times-Roman", spaceAfter=12,
-    ))
-    styles.add(ParagraphStyle(
-        "AbstractHeading", parent=styles["Heading2"],
-        fontSize=11, fontName="Times-Bold", spaceAfter=4,
-    ))
-    styles.add(ParagraphStyle(
-        "AbstractBody", parent=styles["Normal"],
-        fontSize=10, leading=13, fontName="Times-Italic",
-        alignment=TA_JUSTIFY, leftIndent=20, rightIndent=20, spaceAfter=12,
-    ))
-    styles.add(ParagraphStyle(
-        "SectionHeading", parent=styles["Heading1"],
-        fontSize=12, fontName="Times-Bold", spaceBefore=16, spaceAfter=6,
-    ))
-    styles.add(ParagraphStyle(
-        "SubsectionHeading", parent=styles["Heading2"],
-        fontSize=11, fontName="Times-BoldItalic", spaceBefore=10, spaceAfter=4,
-    ))
+    styles.add(
+        ParagraphStyle(
+            "PaperTitle",
+            parent=styles["Title"],
+            fontSize=16,
+            leading=20,
+            spaceAfter=6,
+            alignment=TA_CENTER,
+            fontName="Times-Bold",
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "Authors",
+            parent=styles["Normal"],
+            fontSize=11,
+            leading=14,
+            alignment=TA_CENTER,
+            fontName="Times-Roman",
+            spaceAfter=12,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "AbstractHeading",
+            parent=styles["Heading2"],
+            fontSize=11,
+            fontName="Times-Bold",
+            spaceAfter=4,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "AbstractBody",
+            parent=styles["Normal"],
+            fontSize=10,
+            leading=13,
+            fontName="Times-Italic",
+            alignment=TA_JUSTIFY,
+            leftIndent=20,
+            rightIndent=20,
+            spaceAfter=12,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "SectionHeading",
+            parent=styles["Heading1"],
+            fontSize=12,
+            fontName="Times-Bold",
+            spaceBefore=16,
+            spaceAfter=6,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "SubsectionHeading",
+            parent=styles["Heading2"],
+            fontSize=11,
+            fontName="Times-BoldItalic",
+            spaceBefore=10,
+            spaceAfter=4,
+        )
+    )
     styles["BodyText"].fontSize = 10
     styles["BodyText"].leading = 13
     styles["BodyText"].fontName = "Times-Roman"
     styles["BodyText"].alignment = TA_JUSTIFY
     styles["BodyText"].spaceAfter = 6
-    styles.add(ParagraphStyle(
-        "Caption", parent=styles["Normal"],
-        fontSize=9, leading=11, fontName="Times-Italic",
-        alignment=TA_CENTER, spaceBefore=4, spaceAfter=10,
-    ))
-    styles.add(ParagraphStyle(
-        "Reference", parent=styles["Normal"],
-        fontSize=9, leading=11, fontName="Times-Roman",
-        leftIndent=20, firstLineIndent=-20, spaceAfter=2,
-    ))
-    styles.add(ParagraphStyle(
-        "Keywords", parent=styles["Normal"],
-        fontSize=10, leading=13, fontName="Times-Roman",
-        spaceAfter=12,
-    ))
+    styles.add(
+        ParagraphStyle(
+            "Caption",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=11,
+            fontName="Times-Italic",
+            alignment=TA_CENTER,
+            spaceBefore=4,
+            spaceAfter=10,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "Reference",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=11,
+            fontName="Times-Roman",
+            leftIndent=20,
+            firstLineIndent=-20,
+            spaceAfter=2,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "Keywords",
+            parent=styles["Normal"],
+            fontSize=10,
+            leading=13,
+            fontName="Times-Roman",
+            spaceAfter=12,
+        )
+    )
     return styles
 
 
@@ -120,9 +181,12 @@ def generate_pdf(
     pdf_path = os.path.join(output_dir, f"{safe_name}_{journal_key}.pdf")
 
     doc = SimpleDocTemplate(
-        pdf_path, pagesize=A4,
-        topMargin=25 * mm, bottomMargin=25 * mm,
-        leftMargin=25 * mm, rightMargin=25 * mm,
+        pdf_path,
+        pagesize=A4,
+        topMargin=25 * mm,
+        bottomMargin=25 * mm,
+        leftMargin=25 * mm,
+        rightMargin=25 * mm,
     )
 
     story = []
@@ -150,9 +214,7 @@ def generate_pdf(
     # Keywords
     keywords = paper_content.get("keywords", "")
     if keywords:
-        story.append(Paragraph(
-            f"<b>Keywords:</b> {_safe_xml(keywords)}", styles["Keywords"]
-        ))
+        story.append(Paragraph(f"<b>Keywords:</b> {_safe_xml(keywords)}", styles["Keywords"]))
 
     # Highlights
     highlights = paper_content.get("highlights", [])
@@ -198,20 +260,29 @@ def generate_pdf(
 
         data = [headers] + rows
         t = Table(data, repeatRows=1)
-        t.setStyle(TableStyle([
-            ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("GRID", (0, 0), (-1, 0), 0.5, colors.white),
-            ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
-            ("LINEBELOW", (0, -1), (-1, -1), 1, colors.black),
-            ("LINEABOVE", (0, 0), (-1, 0), 1, colors.black),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ]))
+        t.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("GRID", (0, 0), (-1, 0), 0.5, colors.white),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
+                    ("LINEBELOW", (0, -1), (-1, -1), 1, colors.black),
+                    ("LINEABOVE", (0, 0), (-1, 0), 1, colors.black),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f8f9fa")],
+                    ),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]
+            )
+        )
         story.append(KeepTogether([t]))
         story.append(Spacer(1, 10))
 
@@ -226,9 +297,9 @@ def generate_pdf(
                     img.hAlign = "CENTER"
                     story.append(img)
                 except Exception:
-                    story.append(Paragraph(
-                        f"[Figure: {os.path.basename(fig_path)}]", styles["Caption"]
-                    ))
+                    story.append(
+                        Paragraph(f"[Figure: {os.path.basename(fig_path)}]", styles["Caption"])
+                    )
                 cap = captions[i] if i < len(captions) else f"Fig. {i + 1}."
                 story.append(Paragraph(_safe_xml(cap), styles["Caption"]))
 

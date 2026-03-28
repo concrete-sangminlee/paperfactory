@@ -1,7 +1,4 @@
-import os
-import pytest
-
-from utils.submission_utils import submission_checklist, generate_cover_letter, reformat_paper
+from utils.submission_utils import generate_cover_letter, reformat_paper, submission_checklist
 
 
 def _make_paper():
@@ -37,7 +34,11 @@ class TestSubmissionChecklist:
         paper = _make_paper()
         paper["highlights"] = []
         result = submission_checklist(paper, "jweia")
-        hl_items = [i for i in result["items"] if "Highlights" in i["description"] and "provided" in i["description"]]
+        hl_items = [
+            i
+            for i in result["items"]
+            if "Highlights" in i["description"] and "provided" in i["description"]
+        ]
         assert len(hl_items) > 0
         assert hl_items[0]["passed"] is False
 

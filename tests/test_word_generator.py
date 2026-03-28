@@ -1,7 +1,7 @@
 import os
-import json
-import pytest
+
 from docx import Document
+
 from utils.word_generator import generate_word, load_guideline
 
 MINIMAL_CONTENT = {
@@ -10,10 +10,17 @@ MINIMAL_CONTENT = {
     "abstract": "This is the abstract text for testing purposes.",
     "keywords": "keyword1; keyword2; keyword3",
     "sections": [
-        {"heading": "INTRODUCTION", "content": "Introduction paragraph one.\n\nIntroduction paragraph two."},
-        {"heading": "METHODOLOGY", "content": "Methodology text.", "subsections": [
-            {"heading": "Data Collection", "content": "Sub-section text."},
-        ]},
+        {
+            "heading": "INTRODUCTION",
+            "content": "Introduction paragraph one.\n\nIntroduction paragraph two.",
+        },
+        {
+            "heading": "METHODOLOGY",
+            "content": "Methodology text.",
+            "subsections": [
+                {"heading": "Data Collection", "content": "Sub-section text."},
+            ],
+        },
         {"heading": "CONCLUSIONS", "content": "Conclusions text."},
     ],
     "references": [
@@ -51,9 +58,16 @@ class TestGenerateWord:
         assert any("REFERENCES" in t for t in texts)
 
     def test_tables_inserted(self, tmp_path):
-        content = {**MINIMAL_CONTENT, "tables": [
-            {"caption": "Table 1. Test table.", "headers": ["Col A", "Col B"], "rows": [["1", "2"]]}
-        ]}
+        content = {
+            **MINIMAL_CONTENT,
+            "tables": [
+                {
+                    "caption": "Table 1. Test table.",
+                    "headers": ["Col A", "Col B"],
+                    "rows": [["1", "2"]],
+                }
+            ],
+        }
         path = generate_word(content, "asce_jse", output_dir=str(tmp_path))
         doc = Document(path)
         assert len(doc.tables) >= 1

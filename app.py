@@ -3,8 +3,8 @@
 Run with: streamlit run app.py
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,12 +15,11 @@ except ImportError:
     print("Then: streamlit run app.py")
     sys.exit(1)
 
-from utils.quality_checker import check_paper
+from pipeline.orchestrator import PaperPipeline
 from utils.ai_reviewer import review_paper
-from utils.submission_utils import submission_checklist, generate_cover_letter
-from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
 from utils.data_sources import list_sources, suggest_sources
-from pipeline.orchestrator import PaperPipeline, PipelineStep
+from utils.quality_checker import check_paper
+from utils.submission_utils import generate_cover_letter, submission_checklist
 
 st.set_page_config(page_title="PaperFactory", page_icon="📝", layout="wide")
 
@@ -159,4 +158,3 @@ with tab5:
                 st.error("Invalid JSON")
 
 # Need json import at top
-import json

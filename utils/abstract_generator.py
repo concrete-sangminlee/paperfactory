@@ -65,7 +65,7 @@ def generate_abstract(paper_content: dict, max_words: int = 250) -> str:
         # End at last complete sentence
         last_period = abstract.rfind(".")
         if last_period > len(abstract) * 0.5:
-            abstract = abstract[:last_period + 1]
+            abstract = abstract[: last_period + 1]
 
     return abstract
 
@@ -81,29 +81,60 @@ def improve_abstract(abstract: str, paper_content: dict, max_words: int = 250) -
 
     # Length check
     if len(words) < 100:
-        suggestions.append(f"Abstract is short ({len(words)} words). Aim for 150-{max_words} words.")
+        suggestions.append(
+            f"Abstract is short ({len(words)} words). Aim for 150-{max_words} words."
+        )
     elif len(words) > max_words:
-        suggestions.append(f"Abstract exceeds limit ({len(words)}/{max_words} words). Trim unnecessary details.")
+        suggestions.append(
+            f"Abstract exceeds limit ({len(words)}/{max_words} words). Trim unnecessary details."
+        )
 
     # Structure check
-    has_purpose = any(w in abstract.lower() for w in ["this study", "this paper", "this work", "we present", "we propose"])
-    has_method = any(w in abstract.lower() for w in ["method", "approach", "model", "framework", "technique", "algorithm"])
-    has_results = any(w in abstract.lower() for w in ["result", "found", "achieved", "show", "demonstrate", "accuracy", "r-squared", "rmse"])
-    has_conclusion = any(w in abstract.lower() for w in ["conclud", "significant", "effective", "practical", "implication", "potential"])
+    has_purpose = any(
+        w in abstract.lower()
+        for w in ["this study", "this paper", "this work", "we present", "we propose"]
+    )
+    has_method = any(
+        w in abstract.lower()
+        for w in ["method", "approach", "model", "framework", "technique", "algorithm"]
+    )
+    has_results = any(
+        w in abstract.lower()
+        for w in [
+            "result",
+            "found",
+            "achieved",
+            "show",
+            "demonstrate",
+            "accuracy",
+            "r-squared",
+            "rmse",
+        ]
+    )
+    has_conclusion = any(
+        w in abstract.lower()
+        for w in ["conclud", "significant", "effective", "practical", "implication", "potential"]
+    )
 
     if not has_purpose:
-        suggestions.append("Missing purpose statement. Start with 'This study...' or 'This paper...'")
+        suggestions.append(
+            "Missing purpose statement. Start with 'This study...' or 'This paper...'"
+        )
     if not has_method:
         suggestions.append("Missing methodology description. Mention the approach/models used.")
     if not has_results:
-        suggestions.append("Missing quantitative results. Include key metrics (R², accuracy, etc.).")
+        suggestions.append(
+            "Missing quantitative results. Include key metrics (R², accuracy, etc.)."
+        )
     if not has_conclusion:
         suggestions.append("Missing conclusion/significance statement.")
 
     # Specificity check
     numbers = re.findall(r"\d+\.?\d*", abstract)
     if len(numbers) < 2:
-        suggestions.append("Add more specific quantitative results (numbers, percentages, metrics).")
+        suggestions.append(
+            "Add more specific quantitative results (numbers, percentages, metrics)."
+        )
 
     score = 100 - len(suggestions) * 15
     score = max(score, 0)
@@ -141,8 +172,19 @@ def _extract_purpose(section: dict) -> str:
     # Look for objective sentences
     for s in sentences:
         s_lower = s.lower()
-        if any(phrase in s_lower for phrase in ["this study", "this paper", "this work", "the present",
-                                                  "objective", "aim", "purpose", "addresses"]):
+        if any(
+            phrase in s_lower
+            for phrase in [
+                "this study",
+                "this paper",
+                "this work",
+                "the present",
+                "objective",
+                "aim",
+                "purpose",
+                "addresses",
+            ]
+        ):
             return s
     # Fallback: last sentence of intro (often states objectives)
     if sentences:
@@ -158,8 +200,19 @@ def _extract_methods(section: dict) -> str:
     method_sentences = []
     for s in sentences:
         s_lower = s.lower()
-        if any(w in s_lower for w in ["model", "method", "approach", "framework",
-                                        "algorithm", "trained", "compared", "cross-validation"]):
+        if any(
+            w in s_lower
+            for w in [
+                "model",
+                "method",
+                "approach",
+                "framework",
+                "algorithm",
+                "trained",
+                "compared",
+                "cross-validation",
+            ]
+        ):
             method_sentences.append(s)
             if len(method_sentences) >= 2:
                 break

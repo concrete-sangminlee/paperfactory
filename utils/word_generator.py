@@ -13,13 +13,18 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt
 
-GUIDELINES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "guidelines")
-DEFAULT_PAPERS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outputs", "papers")
+GUIDELINES_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "guidelines"
+)
+DEFAULT_PAPERS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outputs", "papers"
+)
 
 
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
+
 
 def load_guideline(journal_key: str) -> dict:
     """Load and return the guideline JSON for *journal_key*."""
@@ -31,6 +36,7 @@ def load_guideline(journal_key: str) -> dict:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _apply_font(run, formatting: dict) -> None:
     run.font.name = formatting.get("font", "Times New Roman")
@@ -202,6 +208,7 @@ def _insert_table(doc, tbl_info: dict, formatting: dict, no_vertical: bool) -> N
 # Main public API
 # ---------------------------------------------------------------------------
 
+
 def generate_word(
     paper_content: dict,
     journal_key: str,
@@ -240,7 +247,9 @@ def generate_word(
 
     # Determine table border style from guideline
     table_rules = fig_config.get("table_rules", "")
-    no_vertical_borders = "no vertical" in table_rules.lower() or "no vertical rules" in table_rules.lower()
+    no_vertical_borders = (
+        "no vertical" in table_rules.lower() or "no vertical rules" in table_rules.lower()
+    )
 
     is_elsevier = "elsevier" in publisher
     is_asce = "american society of civil engineers" in publisher or "asce" in journal_key.lower()
@@ -379,8 +388,10 @@ def generate_word(
         for i, entry in enumerate(notation):
             symbol_cell = tbl.rows[i].cells[0]
             def_cell = tbl.rows[i].cells[1]
-            for cell, text in ((symbol_cell, entry.get("symbol", "")),
-                               (def_cell, entry.get("definition", ""))):
+            for cell, text in (
+                (symbol_cell, entry.get("symbol", "")),
+                (def_cell, entry.get("definition", "")),
+            ):
                 cell.text = ""
                 p = cell.paragraphs[0]
                 run = p.add_run(text)
@@ -423,7 +434,9 @@ def generate_word(
             if i <= len(custom_captions):
                 cap_text = custom_captions[i - 1]
             else:
-                desc = os.path.splitext(os.path.basename(fig_path))[0] if fig_path else f"Figure {i}"
+                desc = (
+                    os.path.splitext(os.path.basename(fig_path))[0] if fig_path else f"Figure {i}"
+                )
                 cap_text = cap_style.replace("{n}", str(i)).replace("{desc}", desc)
             cap_para = doc.add_paragraph()
             cap_run = cap_para.add_run(cap_text)

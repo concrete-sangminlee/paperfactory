@@ -1,5 +1,6 @@
 import pytest
-from utils.data_sources import list_sources, get_source, suggest_sources
+
+from utils.data_sources import get_source, list_sources, suggest_sources
 
 
 class TestListSources:
@@ -43,7 +44,9 @@ class TestSuggestSources:
         assert sources[0]["key"] in ("tpu", "nist_aero")
 
     def test_earthquake_topic(self):
-        sources = suggest_sources("seismic damage assessment of RC frames using ground motion records")
+        sources = suggest_sources(
+            "seismic damage assessment of RC frames using ground motion records"
+        )
         assert len(sources) >= 2
 
     def test_no_match(self):

@@ -1,7 +1,6 @@
-import os
 import pytest
 
-from utils.quality_checker import check_paper, _count_body_words, load_guideline
+from utils.quality_checker import _count_body_words, check_paper, load_guideline
 
 
 def _make_paper(**overrides):
@@ -84,19 +83,23 @@ class TestCheckPaperFail:
         assert fig_check["passed"] is False
 
     def test_missing_sections_fails(self):
-        paper = _make_paper(sections=[
-            {"heading": "METHODOLOGY", "content": " ".join(["text"] * 6000)},
-        ])
+        paper = _make_paper(
+            sections=[
+                {"heading": "METHODOLOGY", "content": " ".join(["text"] * 6000)},
+            ]
+        )
         result = check_paper(paper, "jweia")
         sec_check = _find_check(result, "required_sections")
         assert sec_check["passed"] is False
         assert "INTRODUCTION" in sec_check["missing"]
 
     def test_low_body_words_fails(self):
-        paper = _make_paper(sections=[
-            {"heading": "INTRODUCTION", "content": "Short intro."},
-            {"heading": "CONCLUSIONS", "content": "Short conclusion."},
-        ])
+        paper = _make_paper(
+            sections=[
+                {"heading": "INTRODUCTION", "content": "Short intro."},
+                {"heading": "CONCLUSIONS", "content": "Short conclusion."},
+            ]
+        )
         result = check_paper(paper, "jweia")
         body_check = _find_check(result, "body_word_count")
         assert body_check["passed"] is False
@@ -143,9 +146,13 @@ class TestCountBodyWords:
     def test_counts_subsections(self):
         paper = {
             "sections": [
-                {"heading": "A", "content": "one two", "subsections": [
-                    {"heading": "A.1", "content": "three four five"},
-                ]},
+                {
+                    "heading": "A",
+                    "content": "one two",
+                    "subsections": [
+                        {"heading": "A.1", "content": "three four five"},
+                    ],
+                },
             ]
         }
         assert _count_body_words(paper) == 5
@@ -163,10 +170,22 @@ class TestLoadGuideline:
 
 class TestAllJournals:
     """Verify check_paper works with all 10 supported journals."""
-    @pytest.mark.parametrize("journal_key", [
-        "asce_jse", "aci_sj", "jweia", "jbe", "eng_structures",
-        "eesd", "thin_walled", "cem_con_comp", "comput_struct", "autom_constr",
-    ])
+
+    @pytest.mark.parametrize(
+        "journal_key",
+        [
+            "asce_jse",
+            "aci_sj",
+            "jweia",
+            "jbe",
+            "eng_structures",
+            "eesd",
+            "thin_walled",
+            "cem_con_comp",
+            "comput_struct",
+            "autom_constr",
+        ],
+    )
     def test_valid_paper_passes_all_journals(self, journal_key):
         paper = _make_paper(abstract=" ".join(["word"] * 100))
         result = check_paper(paper, journal_key)

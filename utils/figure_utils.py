@@ -1,7 +1,7 @@
 """Standardized figure styling for PaperFactory research outputs."""
 
 import os
-import matplotlib
+
 import matplotlib.pyplot as plt
 
 FIGURES_DIR = os.path.join(
@@ -10,16 +10,34 @@ FIGURES_DIR = os.path.join(
 
 _PALETTES = {
     "default": [
-        "#1f77b4", "#d62728", "#2ca02c", "#ff7f0e",
-        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+        "#1f77b4",
+        "#d62728",
+        "#2ca02c",
+        "#ff7f0e",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
     ],
     "muted": [
-        "#4878d0", "#ee854a", "#6acc64", "#d65f5f",
-        "#956cb4", "#8c613c", "#dc7ec0", "#797979",
+        "#4878d0",
+        "#ee854a",
+        "#6acc64",
+        "#d65f5f",
+        "#956cb4",
+        "#8c613c",
+        "#dc7ec0",
+        "#797979",
     ],
     "grayscale": [
-        "#000000", "#333333", "#555555", "#777777",
-        "#999999", "#bbbbbb", "#dddddd", "#444444",
+        "#000000",
+        "#333333",
+        "#555555",
+        "#777777",
+        "#999999",
+        "#bbbbbb",
+        "#dddddd",
+        "#444444",
     ],
 }
 
@@ -38,30 +56,32 @@ def setup_style():
     Uses Times New Roman with DejaVu Serif as fallback for Linux/CI environments
     where Times New Roman is not installed.
     """
-    plt.rcParams.update({
-        "font.family": ["serif"],
-        "font.serif": ["Times New Roman", "DejaVu Serif"],
-        "font.size": 11,
-        "axes.labelsize": 12,
-        "axes.titlesize": 12,
-        "legend.fontsize": 10,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "xtick.direction": "in",
-        "ytick.direction": "in",
-        "xtick.minor.visible": True,
-        "ytick.minor.visible": True,
-        "xtick.top": True,
-        "ytick.right": True,
-        "axes.linewidth": 0.8,
-        "grid.linewidth": 0.5,
-        "grid.alpha": 0.3,
-        "savefig.dpi": 300,
-        "savefig.bbox": "tight",
-        "figure.dpi": 100,
-        "figure.constrained_layout.use": True,
-        "mathtext.fontset": "dejavuserif",
-    })
+    plt.rcParams.update(
+        {
+            "font.family": ["serif"],
+            "font.serif": ["Times New Roman", "DejaVu Serif"],
+            "font.size": 11,
+            "axes.labelsize": 12,
+            "axes.titlesize": 12,
+            "legend.fontsize": 10,
+            "xtick.labelsize": 10,
+            "ytick.labelsize": 10,
+            "xtick.direction": "in",
+            "ytick.direction": "in",
+            "xtick.minor.visible": True,
+            "ytick.minor.visible": True,
+            "xtick.top": True,
+            "ytick.right": True,
+            "axes.linewidth": 0.8,
+            "grid.linewidth": 0.5,
+            "grid.alpha": 0.3,
+            "savefig.dpi": 300,
+            "savefig.bbox": "tight",
+            "figure.dpi": 100,
+            "figure.constrained_layout.use": True,
+            "mathtext.fontset": "dejavuserif",
+        }
+    )
 
 
 def get_colors(palette: str = "default") -> list[str]:

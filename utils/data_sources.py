@@ -4,16 +4,13 @@ Provides metadata and download helpers for common open databases.
 Actual data download requires network access and may need user authentication.
 """
 
-import os
-import json
-
 SOURCES = {
     "tpu": {
         "name": "TPU Aerodynamic Database",
         "organization": "Tokyo Polytechnic University",
         "url": "https://db.wind.arch.t-kougei.ac.jp/",
         "description": "Wind tunnel measurement data for low-rise and high-rise building models. "
-                       "Includes mean and fluctuating pressure coefficients, time series data.",
+        "Includes mean and fluctuating pressure coefficients, time series data.",
         "data_types": ["wind_pressure_coefficients", "time_series", "mean_values", "peak_values"],
         "building_types": ["flat_roof", "gable_roof", "hip_roof", "high_rise"],
         "access": "free",
@@ -25,7 +22,7 @@ SOURCES = {
         "organization": "Pacific Earthquake Engineering Research Center",
         "url": "https://ngawest2.berkeley.edu/",
         "description": "Comprehensive database of recorded ground motions from shallow crustal "
-                       "earthquakes in active tectonic regions worldwide.",
+        "earthquakes in active tectonic regions worldwide.",
         "data_types": ["acceleration_time_series", "response_spectra", "ground_motion_parameters"],
         "access": "free (registration required)",
         "format": "AT2, CSV",
@@ -36,7 +33,7 @@ SOURCES = {
         "organization": "USGS / CGS",
         "url": "https://www.strongmotioncenter.org/",
         "description": "Instrumented building and bridge response records from earthquakes. "
-                       "Includes structural response at multiple floor levels.",
+        "Includes structural response at multiple floor levels.",
         "data_types": ["structural_response", "floor_acceleration", "building_records"],
         "access": "free",
         "format": "V1/V2 COSMOS format",
@@ -57,7 +54,7 @@ SOURCES = {
         "organization": "Natural Hazards Engineering Research Infrastructure",
         "url": "https://www.designsafe-ci.org/",
         "description": "Shared data repository for natural hazards research. Includes wind, "
-                       "earthquake, storm surge, and tsunami datasets.",
+        "earthquake, storm surge, and tsunami datasets.",
         "data_types": ["multi_hazard", "experimental", "simulation", "field_data"],
         "access": "free (registration required)",
         "format": "Various",
@@ -68,7 +65,7 @@ SOURCES = {
         "organization": "National Research Institute for Earth Science and Disaster Resilience (NIED)",
         "url": "https://www.kyoshin.bosai.go.jp/",
         "description": "Japanese strong-motion seismograph network. Over 1,700 stations "
-                       "recording acceleration data from earthquakes across Japan.",
+        "recording acceleration data from earthquakes across Japan.",
         "data_types": ["acceleration_time_series", "ground_motion_parameters"],
         "access": "free (registration required)",
         "format": "ASCII, WIN format",

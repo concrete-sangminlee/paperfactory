@@ -1,5 +1,6 @@
 import pytest
-from utils.template_system import list_templates, get_template, generate_skeleton
+
+from utils.template_system import generate_skeleton, get_template, list_templates
 
 
 class TestListTemplates:

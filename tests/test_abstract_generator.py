@@ -1,29 +1,40 @@
-import pytest
 from utils.abstract_generator import generate_abstract, improve_abstract
 
 
 def _make_paper():
     return {
         "sections": [
-            {"heading": "INTRODUCTION", "content": (
-                "Wind loads are critical for building design. "
-                "Previous studies have used neural networks for prediction. "
-                "This study develops ML models for peak wind pressure prediction using the TPU database."
-            )},
-            {"heading": "METHODOLOGY", "content": (
-                "Three models were compared: Random Forest, Gradient Boosting, and DNN. "
-                "The models were trained with 10-fold cross-validation on 5184 samples."
-            )},
-            {"heading": "RESULTS AND DISCUSSION", "content": (
-                "Random Forest achieved R-squared of 0.9999 and RMSE of 0.012. "
-                "Feature importance analysis shows statistical features dominate. "
-                "The model outperforms baseline approaches by 15 percent."
-            )},
-            {"heading": "CONCLUSIONS", "content": (
-                "This study demonstrated that ML models effectively predict peak wind pressures. "
-                "Random Forest is recommended for tabular wind pressure data. "
-                "Future work should validate with real TPU records."
-            )},
+            {
+                "heading": "INTRODUCTION",
+                "content": (
+                    "Wind loads are critical for building design. "
+                    "Previous studies have used neural networks for prediction. "
+                    "This study develops ML models for peak wind pressure prediction using the TPU database."
+                ),
+            },
+            {
+                "heading": "METHODOLOGY",
+                "content": (
+                    "Three models were compared: Random Forest, Gradient Boosting, and DNN. "
+                    "The models were trained with 10-fold cross-validation on 5184 samples."
+                ),
+            },
+            {
+                "heading": "RESULTS AND DISCUSSION",
+                "content": (
+                    "Random Forest achieved R-squared of 0.9999 and RMSE of 0.012. "
+                    "Feature importance analysis shows statistical features dominate. "
+                    "The model outperforms baseline approaches by 15 percent."
+                ),
+            },
+            {
+                "heading": "CONCLUSIONS",
+                "content": (
+                    "This study demonstrated that ML models effectively predict peak wind pressures. "
+                    "Random Forest is recommended for tabular wind pressure data. "
+                    "Future work should validate with real TPU records."
+                ),
+            },
         ],
     }
 

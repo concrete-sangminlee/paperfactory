@@ -150,9 +150,7 @@ def generate_latex(
         lines.append(_escape_latex(abstract))
         lines.append(r"\end{abstract}")
         if keywords:
-            lines.append(
-                f"\\noindent\\textbf{{Keywords:}} {_escape_latex(keywords)}"
-            )
+            lines.append(f"\\noindent\\textbf{{Keywords:}} {_escape_latex(keywords)}")
     lines.append("")
 
     # Sections
@@ -176,16 +174,10 @@ def generate_latex(
         custom_captions = paper_content.get("figure_captions", [])
         for i, fig_path in enumerate(figures, 1):
             fig_basename = os.path.basename(fig_path)
-            cap = (
-                custom_captions[i - 1]
-                if i <= len(custom_captions)
-                else f"Figure {i}"
-            )
+            cap = custom_captions[i - 1] if i <= len(custom_captions) else f"Figure {i}"
             lines.append(r"\begin{figure}[htbp]")
             lines.append(r"\centering")
-            lines.append(
-                f"\\includegraphics[width=0.9\\textwidth]{{{fig_basename}}}"
-            )
+            lines.append(f"\\includegraphics[width=0.9\\textwidth]{{{fig_basename}}}")
             lines.append(f"\\caption{{{_escape_latex(cap)}}}")
             lines.append(f"\\label{{fig:{i}}}")
             lines.append(r"\end{figure}")
@@ -254,7 +246,9 @@ def _parse_reference(ref_text: str) -> dict:
         title_start = 0
         for j, part in enumerate(parts):
             # Author part: contains initials like "A." or "A.B."
-            if re.search(r"\b[A-Z]\.\s*[A-Z]?\.", part) or (j == 0 and re.search(r"\b[A-Z]\.", part)):
+            if re.search(r"\b[A-Z]\.\s*[A-Z]?\.", part) or (
+                j == 0 and re.search(r"\b[A-Z]\.", part)
+            ):
                 author_parts.append(part)
                 title_start = j + 1
             else:

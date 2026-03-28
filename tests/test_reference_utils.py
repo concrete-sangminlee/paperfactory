@@ -1,7 +1,7 @@
-import os
 import json
-import pytest
-from utils.reference_utils import validate_references, check_duplicates, detect_citation_style
+import os
+
+from utils.reference_utils import check_duplicates, detect_citation_style, validate_references
 
 GUIDELINES_DIR = os.path.join(os.path.dirname(__file__), "..", "guidelines")
 
@@ -19,7 +19,9 @@ class TestValidateReferences:
         assert any("DOI" in i["issue"] for i in issues)
 
     def test_valid_ref_no_issues(self):
-        refs = ["[1] A. Author, Some title, J. Struct. Eng. 50 (2024) 100-110. https://doi.org/10.1000/test."]
+        refs = [
+            "[1] A. Author, Some title, J. Struct. Eng. 50 (2024) 100-110. https://doi.org/10.1000/test."
+        ]
         guideline = _load_guideline("eng_structures")
         issues = validate_references(refs, guideline)
         doi_issues = [i for i in issues if "DOI" in i["issue"]]

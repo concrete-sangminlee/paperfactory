@@ -1,5 +1,4 @@
 import os
-import pytest
 
 from utils.pdf_generator import generate_pdf
 
@@ -13,9 +12,13 @@ def _make_paper():
         "highlights": ["Highlight one", "Highlight two"],
         "sections": [
             {"heading": "INTRODUCTION", "content": "Introduction text here."},
-            {"heading": "METHODOLOGY", "content": "Method text.", "subsections": [
-                {"heading": "Data collection", "content": "Data text."},
-            ]},
+            {
+                "heading": "METHODOLOGY",
+                "content": "Method text.",
+                "subsections": [
+                    {"heading": "Data collection", "content": "Data text."},
+                ],
+            },
             {"heading": "CONCLUSIONS", "content": "Conclusion text."},
         ],
         "tables": [
@@ -53,8 +56,10 @@ class TestGeneratePdf:
         paper = _make_paper()
         # Create a dummy figure
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+
         fig, ax = plt.subplots()
         ax.plot([1, 2, 3])
         fig_path = os.path.join(str(tmp_path), "test_fig.png")

@@ -6,10 +6,9 @@ allowing pause/resume and step-by-step execution.
 
 import json
 import os
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, field, asdict
-from typing import Optional
 
 
 class PipelineStep(str, Enum):
@@ -42,6 +41,7 @@ STEP_DESCRIPTIONS = {
 @dataclass
 class PipelineState:
     """Persistent state for a paper generation pipeline run."""
+
     topic: str
     journal_key: str
     current_step: PipelineStep = PipelineStep.LITERATURE_REVIEW
@@ -125,8 +125,10 @@ class PaperPipeline:
             "Steps:",
         ]
         for step in STEP_ORDER[:-1]:
-            status = "done" if step.value in self.state.steps_completed else (
-                ">>> CURRENT" if step == self.state.current_step else "pending"
+            status = (
+                "done"
+                if step.value in self.state.steps_completed
+                else (">>> CURRENT" if step == self.state.current_step else "pending")
             )
             desc = STEP_DESCRIPTIONS.get(step, "")
             lines.append(f"  [{status:>12}] {step.value}: {desc}")

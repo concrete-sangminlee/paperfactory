@@ -1,10 +1,11 @@
-import os
 import csv
-import pytest
+import os
+
 import matplotlib
+
 matplotlib.use("Agg")
 
-from utils.table_utils import create_table_figure, save_table_csv, format_number, format_mean_std
+from utils.table_utils import create_table_figure, format_mean_std, format_number, save_table_csv
 
 
 class TestCreateTableFigure:

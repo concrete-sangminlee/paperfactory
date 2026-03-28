@@ -1,8 +1,10 @@
 """Standardized academic table generation for PaperFactory."""
 
-import os
 import csv
+import os
+
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np

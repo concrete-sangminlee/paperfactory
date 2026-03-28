@@ -1,18 +1,40 @@
-import os
 import json
-import pytest
+import os
 
 from utils.revision_tracker import (
-    create_revision, address_comment, generate_response_letter, track_changes,
+    address_comment,
+    create_revision,
+    generate_response_letter,
+    track_changes,
 )
 
 
 def _make_comments():
     return [
-        {"reviewer": "Reviewer 1", "comment": "Add more references.", "section": "Introduction", "type": "major"},
-        {"reviewer": "Reviewer 1", "comment": "Fix typo in Eq. 3.", "section": "Methodology", "type": "minor"},
-        {"reviewer": "Reviewer 2", "comment": "Clarify feature selection.", "section": "Methodology", "type": "major"},
-        {"reviewer": "Reviewer 2", "comment": "Improve figure resolution.", "section": "Results", "type": "minor"},
+        {
+            "reviewer": "Reviewer 1",
+            "comment": "Add more references.",
+            "section": "Introduction",
+            "type": "major",
+        },
+        {
+            "reviewer": "Reviewer 1",
+            "comment": "Fix typo in Eq. 3.",
+            "section": "Methodology",
+            "type": "minor",
+        },
+        {
+            "reviewer": "Reviewer 2",
+            "comment": "Clarify feature selection.",
+            "section": "Methodology",
+            "type": "major",
+        },
+        {
+            "reviewer": "Reviewer 2",
+            "comment": "Improve figure resolution.",
+            "section": "Results",
+            "type": "minor",
+        },
     ]
 
 

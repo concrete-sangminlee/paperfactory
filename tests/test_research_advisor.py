@@ -1,7 +1,6 @@
 import numpy as np
-import pytest
 
-from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
+from utils.research_advisor import recommend_figure_type, recommend_statistical_tests
 
 
 class TestRecommendStatisticalTests:

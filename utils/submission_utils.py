@@ -2,7 +2,6 @@
 
 import json
 import os
-import re
 from datetime import datetime
 
 GUIDELINES_DIR = os.path.join(
@@ -22,8 +21,12 @@ def submission_checklist(paper_content: dict, journal_key: str, figures: list = 
     # Manuscript format checks
     items.append(_check("Title page present", bool(paper_content.get("title"))))
     items.append(_check("Authors listed", bool(paper_content.get("authors"))))
-    items.append(_check("Abstract within word limit",
-                        len(paper_content.get("abstract", "").split()) <= ms.get("abstract_word_limit", 300)))
+    items.append(
+        _check(
+            "Abstract within word limit",
+            len(paper_content.get("abstract", "").split()) <= ms.get("abstract_word_limit", 300),
+        )
+    )
     items.append(_check("Keywords provided", bool(paper_content.get("keywords"))))
 
     # Highlights
@@ -31,13 +34,17 @@ def submission_checklist(paper_content: dict, journal_key: str, figures: list = 
         hl = paper_content.get("highlights", [])
         items.append(_check("Highlights provided (3-5 items)", 3 <= len(hl) <= 5))
         if hl:
-            items.append(_check("Highlights within character limit",
-                                all(len(h) <= 85 for h in hl)))
+            items.append(_check("Highlights within character limit", all(len(h) <= 85 for h in hl)))
 
     # Graphical abstract
     if ms.get("graphical_abstract_required"):
-        items.append(_check("Graphical abstract prepared", bool(paper_content.get("graphical_abstract")),
-                           note="Required by journal — use PaperBanana to generate"))
+        items.append(
+            _check(
+                "Graphical abstract prepared",
+                bool(paper_content.get("graphical_abstract")),
+                note="Required by journal — use PaperBanana to generate",
+            )
+        )
 
     # Sections
     required_headings = ["INTRODUCTION", "CONCLUSION"]
@@ -56,24 +63,34 @@ def submission_checklist(paper_content: dict, journal_key: str, figures: list = 
     # Figures
     n_figs = len(figures) if figures else len(paper_content.get("figure_captions", []))
     items.append(_check("Figures included (6+)", n_figs >= 6))
-    items.append(_check("Figure captions provided", len(paper_content.get("figure_captions", [])) >= n_figs))
+    items.append(
+        _check("Figure captions provided", len(paper_content.get("figure_captions", [])) >= n_figs)
+    )
 
     # Tables
     items.append(_check("Tables included (3+)", len(paper_content.get("tables", [])) >= 3))
 
     # Data availability
-    items.append(_check("Data availability statement", bool(paper_content.get("data_availability"))))
+    items.append(
+        _check("Data availability statement", bool(paper_content.get("data_availability")))
+    )
 
     # Ethical statements
-    items.append(_check("Conflict of interest statement",
-                        bool(paper_content.get("conflict_of_interest", paper_content.get("acknowledgments"))),
-                        note="Can be included in acknowledgments"))
+    items.append(
+        _check(
+            "Conflict of interest statement",
+            bool(paper_content.get("conflict_of_interest", paper_content.get("acknowledgments"))),
+            note="Can be included in acknowledgments",
+        )
+    )
 
     ready = all(item["passed"] for item in items)
     return {"items": items, "ready": ready, "journal": guideline.get("journal_name", journal_key)}
 
 
-def generate_cover_letter(paper_content: dict, journal_key: str, editor_name: str = "Editor-in-Chief") -> str:
+def generate_cover_letter(
+    paper_content: dict, journal_key: str, editor_name: str = "Editor-in-Chief"
+) -> str:
     """Generate a cover letter for journal submission."""
     guideline = _load_guideline(journal_key)
     journal_name = guideline.get("journal_name", journal_key)
@@ -157,6 +174,7 @@ def reformat_paper(paper_content: dict, from_journal: str, to_journal: str) -> d
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _load_guideline(journal_key: str) -> dict:
     path = os.path.join(GUIDELINES_DIR, f"{journal_key}.json")
     if not os.path.exists(path):
@@ -178,8 +196,10 @@ def _get_scope_statement(guideline: dict, keywords: str) -> str:
     scope_lower = scope.lower()
     matching = [kw for kw in kw_list if any(w in scope_lower for w in kw.split())]
     if matching:
-        return (f"This work addresses topics within the journal's scope, specifically in the areas of "
-                f"{', '.join(matching[:3])}.")
+        return (
+            f"This work addresses topics within the journal's scope, specifically in the areas of "
+            f"{', '.join(matching[:3])}."
+        )
     return "This work falls within the scope of the journal."
 
 

@@ -58,7 +58,9 @@ def _parse_ref(ref: str) -> dict:
         author_parts = []
         rest_start = 0
         for j, part in enumerate(parts):
-            if re.search(r"\b[A-Z]\.\s*[A-Z]?\.", part.strip()) or (j == 0 and re.search(r"\b[A-Z]\.", part.strip())):
+            if re.search(r"\b[A-Z]\.\s*[A-Z]?\.", part.strip()) or (
+                j == 0 and re.search(r"\b[A-Z]\.", part.strip())
+            ):
                 author_parts.append(part.strip())
                 rest_start = j + 1
             else:

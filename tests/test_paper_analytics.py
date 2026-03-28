@@ -1,15 +1,26 @@
-import pytest
-from utils.paper_analytics import analyze_paper, _count_syllables, _readability_scores, _tokenize
+from utils.paper_analytics import _count_syllables, analyze_paper
 
 
 def _make_paper():
     return {
         "abstract": "This study investigates machine learning methods for structural engineering applications.",
         "sections": [
-            {"heading": "INTRODUCTION", "content": " ".join(["The research addresses wind pressure prediction."] * 50)},
-            {"heading": "METHODOLOGY", "content": " ".join(["The method uses random forest models."] * 50)},
-            {"heading": "RESULTS", "content": " ".join(["Results show high prediction accuracy."] * 50)},
-            {"heading": "CONCLUSIONS", "content": " ".join(["The study demonstrates effective prediction."] * 30)},
+            {
+                "heading": "INTRODUCTION",
+                "content": " ".join(["The research addresses wind pressure prediction."] * 50),
+            },
+            {
+                "heading": "METHODOLOGY",
+                "content": " ".join(["The method uses random forest models."] * 50),
+            },
+            {
+                "heading": "RESULTS",
+                "content": " ".join(["Results show high prediction accuracy."] * 50),
+            },
+            {
+                "heading": "CONCLUSIONS",
+                "content": " ".join(["The study demonstrates effective prediction."] * 30),
+            },
         ],
     }
 

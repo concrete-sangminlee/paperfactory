@@ -1,6 +1,6 @@
 import pytest
-from utils.citation_converter import convert_style, _parse_ref
 
+from utils.citation_converter import _parse_ref, convert_style
 
 SAMPLE_REFS = [
     "[1] F. Bre, J.M. Gimenez, Prediction of wind pressure coefficients, Energy Build. 158 (2018) 1429-1441. https://doi.org/10.1016/j.enbuild.2017.11.045",

@@ -13,23 +13,23 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
-import glob
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from pipeline.orchestrator import PaperPipeline, PipelineStep
-from utils.quality_checker import check_paper
-from utils.ai_reviewer import review_paper
-from utils.submission_utils import submission_checklist, generate_cover_letter
-from utils.data_sources import suggest_sources, list_sources
-from utils.paper_analytics import analyze_paper
+from pipeline.orchestrator import PaperPipeline
 from utils.abstract_generator import generate_abstract, improve_abstract
+from utils.ai_reviewer import review_paper
 from utils.bibtex_import import import_bib
 from utils.citation_converter import convert_style
-from utils.template_system import list_templates, generate_skeleton
+from utils.data_sources import suggest_sources
+from utils.paper_analytics import analyze_paper
+from utils.quality_checker import check_paper
+from utils.submission_utils import generate_cover_letter
+from utils.template_system import generate_skeleton, list_templates
 
 
 def cmd_new(args):
@@ -40,7 +40,7 @@ def cmd_new(args):
     print(pipeline.show_status())
     print(f"\nPipeline created: {pipeline.state.run_id}")
     print(f"State saved to: {pipeline.state.output_dir}/pipeline_state.json")
-    print(f"\nNext: Open Claude Code and provide the topic to start Step 1 (Literature Review).")
+    print("\nNext: Open Claude Code and provide the topic to start Step 1 (Literature Review).")
 
 
 def cmd_status(args):
@@ -131,11 +131,11 @@ def cmd_analytics(args):
     result = analyze_paper(paper)
     print(result["summary"])
     if args.verbose:
-        print(f"\nSection balance:")
+        print("\nSection balance:")
         for sec, words in result["section_balance"]["section_words"].items():
             pct = result["section_balance"]["section_proportions"].get(sec, 0)
             print(f"  {sec:<30} {words:>5} words ({pct:.0%})")
-        print(f"\nTop content words:")
+        print("\nTop content words:")
         for w in result["vocabulary"]["top_words"][:10]:
             print(f"  {w['word']:<20} {w['count']}")
 
@@ -190,7 +190,9 @@ def cmd_convert_refs(args):
 def cmd_templates(args):
     """List or generate from paper templates."""
     if args.generate:
-        skeleton = generate_skeleton(args.generate, topic=args.topic or "", journal_key=args.journal or "")
+        skeleton = generate_skeleton(
+            args.generate, topic=args.topic or "", journal_key=args.journal or ""
+        )
         if args.output:
             with open(args.output, "w") as f:
                 json.dump(skeleton, f, indent=2, ensure_ascii=False)

@@ -1,9 +1,12 @@
 import os
-import pytest
+
 import matplotlib
+import pytest
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from utils.figure_utils import setup_style, save_figure, get_colors, get_figsize
+
+from utils.figure_utils import get_colors, get_figsize, save_figure, setup_style
 
 
 class TestSetupStyle:

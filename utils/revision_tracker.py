@@ -2,7 +2,6 @@
 
 import json
 import os
-import re
 from datetime import datetime
 
 DEFAULT_REVISIONS_DIR = os.path.join(
@@ -125,14 +124,18 @@ def generate_response_letter(revision: dict) -> str:
     lines.append("=" * 60)
     lines.append(f"\nManuscript: {revision.get('original_title', '')}")
     lines.append(f"Date: {datetime.now().strftime('%Y-%m-%d')}")
-    lines.append(f"Status: {revision['summary']['addressed']}/{revision['summary']['total']} comments addressed")
+    lines.append(
+        f"Status: {revision['summary']['addressed']}/{revision['summary']['total']} comments addressed"
+    )
     lines.append("")
 
     lines.append("Dear Editor and Reviewers,")
     lines.append("")
-    lines.append("We thank the reviewers for their constructive comments and suggestions. "
-                 "We have carefully revised the manuscript to address all the comments. "
-                 "Below we provide point-by-point responses.")
+    lines.append(
+        "We thank the reviewers for their constructive comments and suggestions. "
+        "We have carefully revised the manuscript to address all the comments. "
+        "Below we provide point-by-point responses."
+    )
     lines.append("")
 
     # Group by reviewer
@@ -149,23 +152,27 @@ def generate_response_letter(revision: dict) -> str:
         lines.append("-" * 60)
 
         for comment in comments:
-            lines.append(f"\nComment {comment['id']} [{comment['type'].upper()}] "
-                        f"(Section: {comment['section']}):")
-            lines.append(f"  \"{comment['comment']}\"")
+            lines.append(
+                f"\nComment {comment['id']} [{comment['type'].upper()}] "
+                f"(Section: {comment['section']}):"
+            )
+            lines.append(f'  "{comment["comment"]}"')
             lines.append("")
 
             if comment["status"] == "addressed":
-                lines.append(f"  Response:")
+                lines.append("  Response:")
                 lines.append(f"  {comment['response']}")
-                lines.append(f"\n  Changes made:")
+                lines.append("\n  Changes made:")
                 lines.append(f"  {comment['changes_made']}")
             else:
-                lines.append(f"  [PENDING - Not yet addressed]")
+                lines.append("  [PENDING - Not yet addressed]")
             lines.append("")
 
     lines.append("=" * 60)
-    lines.append("We believe the revised manuscript addresses all the reviewers' concerns "
-                 "and is now suitable for publication.")
+    lines.append(
+        "We believe the revised manuscript addresses all the reviewers' concerns "
+        "and is now suitable for publication."
+    )
     lines.append("")
     lines.append("Sincerely,")
     lines.append("The Authors")

@@ -1,21 +1,19 @@
 """End-to-end integration tests for the full PaperFactory pipeline."""
 
 import os
-import json
-import pytest
-import numpy as np
 
-from pipeline.orchestrator import PaperPipeline, PipelineStep
-from utils.quality_checker import check_paper
+import pytest
+
+from pipeline.orchestrator import PaperPipeline
 from utils.ai_reviewer import review_paper
-from utils.submission_utils import submission_checklist, generate_cover_letter, reformat_paper
-from utils.word_generator import generate_word
-from utils.pdf_generator import generate_pdf
-from utils.latex_generator import generate_latex
-from utils.reference_utils import validate_references, check_duplicates
 from utils.citation_converter import convert_style
-from utils.template_system import generate_skeleton
 from utils.data_sources import suggest_sources
+from utils.latex_generator import generate_latex
+from utils.pdf_generator import generate_pdf
+from utils.quality_checker import check_paper
+from utils.submission_utils import generate_cover_letter, reformat_paper, submission_checklist
+from utils.template_system import generate_skeleton
+from utils.word_generator import generate_word
 
 
 def _make_full_paper():
@@ -23,18 +21,31 @@ def _make_full_paper():
     return {
         "title": "Integration Test: ML Wind Pressure Prediction",
         "authors": "A. Author, B. Author",
-        "abstract": " ".join(["This study investigates ML models for wind pressure prediction."] * 20),
+        "abstract": " ".join(
+            ["This study investigates ML models for wind pressure prediction."] * 20
+        ),
         "keywords": "wind pressure; machine learning; test",
         "highlights": ["Test highlight one", "Test highlight two", "Test highlight three"],
         "sections": [
             {"heading": "INTRODUCTION", "content": " ".join(["Introduction text."] * 500)},
-            {"heading": "METHODOLOGY", "content": " ".join(["Method text."] * 500),
-             "subsections": [
-                 {"heading": "Data", "content": " ".join(["Data text."] * 300)},
-                 {"heading": "Models", "content": " ".join(["Model text."] * 300)},
-             ]},
-            {"heading": "RESULTS AND DISCUSSION", "content": " ".join(["Results text with Table 1 and Fig. 1 comparison outperform R-squared."] * 300)},
-            {"heading": "CONCLUSIONS", "content": " ".join(["Conclusion with limitations and future work."] * 200)},
+            {
+                "heading": "METHODOLOGY",
+                "content": " ".join(["Method text."] * 500),
+                "subsections": [
+                    {"heading": "Data", "content": " ".join(["Data text."] * 300)},
+                    {"heading": "Models", "content": " ".join(["Model text."] * 300)},
+                ],
+            },
+            {
+                "heading": "RESULTS AND DISCUSSION",
+                "content": " ".join(
+                    ["Results text with Table 1 and Fig. 1 comparison outperform R-squared."] * 300
+                ),
+            },
+            {
+                "heading": "CONCLUSIONS",
+                "content": " ".join(["Conclusion with limitations and future work."] * 200),
+            },
         ],
         "tables": [
             {"caption": f"Table {i}.", "headers": ["A", "B"], "rows": [["1", "2"]]}
@@ -164,9 +175,16 @@ class TestTemplateIntegration:
 class TestCrossJournalCompatibility:
     """Test that paper_content works across all journals."""
 
-    @pytest.mark.parametrize("journal_key", [
-        "asce_jse", "jweia", "eng_structures", "eesd", "buildings_mdpi",
-    ])
+    @pytest.mark.parametrize(
+        "journal_key",
+        [
+            "asce_jse",
+            "jweia",
+            "eng_structures",
+            "eesd",
+            "buildings_mdpi",
+        ],
+    )
     def test_generate_all_formats(self, tmp_path, journal_key):
         paper = _make_full_paper()
         word = generate_word(paper, journal_key, output_dir=str(tmp_path))

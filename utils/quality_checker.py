@@ -56,57 +56,66 @@ def check_paper(paper_content: dict, journal_key: str, figures: list = None) -> 
     abstract = paper_content.get("abstract", "")
     abstract_words = len(abstract.split())
     abstract_limit = ms.get("abstract_word_limit", 300)
-    checks.append({
-        "name": "abstract_word_count",
-        "passed": 0 < abstract_words <= abstract_limit,
-        "value": abstract_words,
-        "limit": abstract_limit,
-        "severity": "critical",
-        "message": f"Abstract: {abstract_words} words (limit: {abstract_limit})",
-    })
+    checks.append(
+        {
+            "name": "abstract_word_count",
+            "passed": 0 < abstract_words <= abstract_limit,
+            "value": abstract_words,
+            "limit": abstract_limit,
+            "severity": "critical",
+            "message": f"Abstract: {abstract_words} words (limit: {abstract_limit})",
+        }
+    )
 
     # 2. Body word count
     body_words = _count_body_words(paper_content)
-    checks.append({
-        "name": "body_word_count",
-        "passed": body_words >= MIN_BODY_WORDS,
-        "value": body_words,
-        "limit": MIN_BODY_WORDS,
-        "severity": "critical",
-        "message": f"Body: {body_words} words (min: {MIN_BODY_WORDS})",
-    })
+    checks.append(
+        {
+            "name": "body_word_count",
+            "passed": body_words >= MIN_BODY_WORDS,
+            "value": body_words,
+            "limit": MIN_BODY_WORDS,
+            "severity": "critical",
+            "message": f"Body: {body_words} words (min: {MIN_BODY_WORDS})",
+        }
+    )
 
     # 3. Required sections
     required_sections = ms.get("sections", [])
     paper_sections = [s.get("heading", "").upper() for s in paper_content.get("sections", [])]
     core_sections = ["INTRODUCTION", "CONCLUSION"]
     missing = [s for s in core_sections if not any(s in ps for ps in paper_sections)]
-    checks.append({
-        "name": "required_sections",
-        "passed": len(missing) == 0,
-        "value": paper_sections,
-        "missing": missing,
-        "severity": "critical",
-        "message": f"Sections: {len(paper_sections)} found"
-                   + (f", missing: {missing}" if missing else ""),
-    })
+    checks.append(
+        {
+            "name": "required_sections",
+            "passed": len(missing) == 0,
+            "value": paper_sections,
+            "missing": missing,
+            "severity": "critical",
+            "message": f"Sections: {len(paper_sections)} found"
+            + (f", missing: {missing}" if missing else ""),
+        }
+    )
 
     # 4. References count
     refs = paper_content.get("references", [])
     if isinstance(refs, str):
         refs = [r for r in refs.split("\n") if r.strip()]
     n_refs = len(refs)
-    checks.append({
-        "name": "reference_count",
-        "passed": n_refs >= MIN_REFERENCES,
-        "value": n_refs,
-        "limit": MIN_REFERENCES,
-        "severity": "critical",
-        "message": f"References: {n_refs} (min: {MIN_REFERENCES})",
-    })
+    checks.append(
+        {
+            "name": "reference_count",
+            "passed": n_refs >= MIN_REFERENCES,
+            "value": n_refs,
+            "limit": MIN_REFERENCES,
+            "severity": "critical",
+            "message": f"References: {n_refs} (min: {MIN_REFERENCES})",
+        }
+    )
 
     # 5. Recent references ratio
     import datetime
+
     current_year = datetime.datetime.now().year
     recent_count = 0
     for ref in refs:
@@ -114,79 +123,93 @@ def check_paper(paper_content: dict, journal_key: str, figures: list = None) -> 
         if years and int(years[-1]) >= current_year - 5:
             recent_count += 1
     recent_ratio = recent_count / max(n_refs, 1)
-    checks.append({
-        "name": "recent_references",
-        "passed": recent_ratio >= MIN_RECENT_RATIO,
-        "value": f"{recent_ratio:.0%}",
-        "limit": f"{MIN_RECENT_RATIO:.0%}",
-        "severity": "warning",
-        "message": f"Recent refs (last 5yr): {recent_count}/{n_refs} ({recent_ratio:.0%})",
-    })
+    checks.append(
+        {
+            "name": "recent_references",
+            "passed": recent_ratio >= MIN_RECENT_RATIO,
+            "value": f"{recent_ratio:.0%}",
+            "limit": f"{MIN_RECENT_RATIO:.0%}",
+            "severity": "warning",
+            "message": f"Recent refs (last 5yr): {recent_count}/{n_refs} ({recent_ratio:.0%})",
+        }
+    )
 
     # 6. Figures count
     n_figures = len(figures) if figures else len(paper_content.get("figure_captions", []))
-    checks.append({
-        "name": "figure_count",
-        "passed": n_figures >= MIN_FIGURES,
-        "value": n_figures,
-        "limit": MIN_FIGURES,
-        "severity": "critical",
-        "message": f"Figures: {n_figures} (min: {MIN_FIGURES})",
-    })
+    checks.append(
+        {
+            "name": "figure_count",
+            "passed": n_figures >= MIN_FIGURES,
+            "value": n_figures,
+            "limit": MIN_FIGURES,
+            "severity": "critical",
+            "message": f"Figures: {n_figures} (min: {MIN_FIGURES})",
+        }
+    )
 
     # 7. Tables count
     n_tables = len(paper_content.get("tables", []))
-    checks.append({
-        "name": "table_count",
-        "passed": n_tables >= MIN_TABLES,
-        "value": n_tables,
-        "limit": MIN_TABLES,
-        "severity": "warning",
-        "message": f"Tables: {n_tables} (min: {MIN_TABLES})",
-    })
+    checks.append(
+        {
+            "name": "table_count",
+            "passed": n_tables >= MIN_TABLES,
+            "value": n_tables,
+            "limit": MIN_TABLES,
+            "severity": "warning",
+            "message": f"Tables: {n_tables} (min: {MIN_TABLES})",
+        }
+    )
 
     # 8. Keywords
     keywords = paper_content.get("keywords", "")
     kw_list = [k.strip() for k in keywords.split(";") if k.strip()] if keywords else []
-    checks.append({
-        "name": "keywords",
-        "passed": len(kw_list) >= 1,
-        "value": len(kw_list),
-        "severity": "warning",
-        "message": f"Keywords: {len(kw_list)}",
-    })
+    checks.append(
+        {
+            "name": "keywords",
+            "passed": len(kw_list) >= 1,
+            "value": len(kw_list),
+            "severity": "warning",
+            "message": f"Keywords: {len(kw_list)}",
+        }
+    )
 
     # 9. Highlights (if required by journal)
     highlights_required = ms.get("highlights_required", False)
     highlights = paper_content.get("highlights", [])
     if highlights_required:
-        checks.append({
-            "name": "highlights",
-            "passed": len(highlights) >= 3,
-            "value": len(highlights),
-            "severity": "warning",
-            "message": f"Highlights: {len(highlights)} (required by journal)",
-        })
+        checks.append(
+            {
+                "name": "highlights",
+                "passed": len(highlights) >= 3,
+                "value": len(highlights),
+                "severity": "warning",
+                "message": f"Highlights: {len(highlights)} (required by journal)",
+            }
+        )
 
     # 10. Title present
     title = paper_content.get("title", "")
-    checks.append({
-        "name": "title",
-        "passed": len(title) > 10,
-        "value": len(title),
-        "severity": "critical",
-        "message": f"Title: {len(title)} chars",
-    })
+    checks.append(
+        {
+            "name": "title",
+            "passed": len(title) > 10,
+            "value": len(title),
+            "severity": "critical",
+            "message": f"Title: {len(title)} chars",
+        }
+    )
 
     # 11. Data availability statement
     data_avail = paper_content.get("data_availability", "")
-    checks.append({
-        "name": "data_availability",
-        "passed": len(data_avail) > 0,
-        "value": bool(data_avail),
-        "severity": "info",
-        "message": f"Data availability: {'present' if data_avail else 'missing'}",
-    })
+    checks.append(
+        {
+            "name": "data_availability",
+            "passed": len(data_avail) > 0,
+            "value": bool(data_avail),
+            "severity": "info",
+            "message": f"Data availability: {'present' if data_avail else 'missing'}",
+        }
+    )
 
     # Score calculation
     critical_checks = [c for c in checks if c["severity"] == "critical"]

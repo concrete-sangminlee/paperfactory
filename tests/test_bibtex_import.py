@@ -1,7 +1,4 @@
-import os
-import pytest
-from utils.bibtex_import import parse_bib_string, import_bib, _format_authors
-
+from utils.bibtex_import import _format_authors, import_bib, parse_bib_string
 
 SAMPLE_BIB = """
 @article{bre2018prediction,

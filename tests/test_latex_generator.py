@@ -1,6 +1,6 @@
 import os
-import pytest
-from utils.latex_generator import generate_latex, _get_document_class, _escape_latex
+
+from utils.latex_generator import _escape_latex, _get_document_class, generate_latex
 
 
 class TestGetDocumentClass:
