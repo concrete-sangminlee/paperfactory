@@ -327,3 +327,87 @@ print(result["checks"])     # list of individual check results
 ```
 
 Validates: abstract word count (journal limit), body word count (min 6,000), required sections, reference count (min 15), recent reference ratio (min 50%), figure count (min 6), table count (min 3), keywords, highlights (if required), title, data availability.
+
+### Table Utils (`utils/table_utils.py`)
+
+```python
+from utils.table_utils import create_table_figure, save_table_csv, format_number
+
+# Render table as publication-quality figure
+path = create_table_figure(
+    headers=["Model", "R²", "RMSE"],
+    rows=[["RF", "0.99", "0.01"], ["GBR", "0.98", "0.02"]],
+    caption="Table 1. Model comparison.",
+    highlight_best="max", highlight_col=1,  # highlight best R²
+    output_dir="outputs/figures/", name="table_1"
+)
+
+# Export as CSV
+csv_path = save_table_csv(headers, rows, name="results")
+```
+
+### AI Reviewer (`utils/ai_reviewer.py`)
+
+Step 5 완료 후 투고 전에 실행하여 사전 리뷰를 수행한다.
+
+```python
+from utils.ai_reviewer import review_paper
+
+result = review_paper(paper_content, "jweia")
+print(result["decision"])   # "Accept with minor revisions" / "Major revision required"
+print(result["summary"])    # 전체 리뷰 코멘트 (major/minor 분류)
+```
+
+리뷰 체크 항목: 구조적 완성도, Introduction 품질(gap 분석), Methodology 상세도, Results 비교 분석, Novelty 명시, 참고문헌 최신성, Figure/Table 적절성.
+
+### Research Advisor (`utils/research_advisor.py`)
+
+Step 3~4에서 통계 분석과 Figure 유형을 결정할 때 사용한다.
+
+```python
+from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
+
+# 데이터 특성에 맞는 통계 검정 추천
+recs = recommend_statistical_tests(data, groups=labels)
+# → [{"test": "One-way ANOVA", "rationale": "Normal data, 3+ groups", "scipy": "..."}]
+
+# 최적 시각화 유형 추천
+figs = recommend_figure_type(data, data_type="continuous", comparison="groups")
+# → [{"type": "Box plot", "code": "ax.boxplot(data)"}]
+```
+
+### Data Sources (`utils/data_sources.py`)
+
+Step 1에서 관련 공개 데이터셋을 찾을 때 사용한다.
+
+```python
+from utils.data_sources import suggest_sources, list_sources
+
+# 주제에 맞는 데이터베이스 추천
+sources = suggest_sources("wind pressure prediction on low-rise buildings")
+# → [{"name": "TPU Aerodynamic Database", "url": "...", "relevance_score": 5}, ...]
+
+# 분야별 데이터베이스 목록
+wind_dbs = list_sources("wind_engineering")
+eq_dbs = list_sources("earthquake_engineering")
+```
+
+지원 DB: TPU, PEER NGA-West2, CESMD, NIST, DesignSafe, K-NET/KiK-net, COSMOS (총 7개).
+
+### Submission Utils (`utils/submission_utils.py`)
+
+Step 5 완료 후 투고 준비 시 사용한다.
+
+```python
+from utils.submission_utils import submission_checklist, generate_cover_letter, reformat_paper
+
+# 투고 준비 체크리스트
+result = submission_checklist(paper_content, "jweia", figures=figure_paths)
+print("Ready:", result["ready"])  # True/False
+
+# 커버레터 자동 생성
+letter = generate_cover_letter(paper_content, "jweia", editor_name="Prof. Smith")
+
+# Reject 후 다른 저널로 재포맷
+new_content = reformat_paper(paper_content, "jweia", "eng_structures")
+```
