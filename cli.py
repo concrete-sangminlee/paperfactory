@@ -25,6 +25,11 @@ from utils.quality_checker import check_paper
 from utils.ai_reviewer import review_paper
 from utils.submission_utils import submission_checklist, generate_cover_letter
 from utils.data_sources import suggest_sources, list_sources
+from utils.paper_analytics import analyze_paper
+from utils.abstract_generator import generate_abstract, improve_abstract
+from utils.bibtex_import import import_bib
+from utils.citation_converter import convert_style
+from utils.template_system import list_templates, generate_skeleton
 
 
 def cmd_new(args):
@@ -118,6 +123,87 @@ def cmd_journals(args):
             print(f"  {key:<20} {name} ({publisher})")
 
 
+def cmd_analytics(args):
+    """Analyze paper readability and statistics."""
+    paper = _load_paper(args.paper)
+    if not paper:
+        return
+    result = analyze_paper(paper)
+    print(result["summary"])
+    if args.verbose:
+        print(f"\nSection balance:")
+        for sec, words in result["section_balance"]["section_words"].items():
+            pct = result["section_balance"]["section_proportions"].get(sec, 0)
+            print(f"  {sec:<30} {words:>5} words ({pct:.0%})")
+        print(f"\nTop content words:")
+        for w in result["vocabulary"]["top_words"][:10]:
+            print(f"  {w['word']:<20} {w['count']}")
+
+
+def cmd_abstract(args):
+    """Generate or improve abstract."""
+    paper = _load_paper(args.paper)
+    if not paper:
+        return
+    if args.generate:
+        abstract = generate_abstract(paper, max_words=args.max_words)
+        print("Generated abstract:")
+        print(abstract)
+    else:
+        existing = paper.get("abstract", "")
+        if not existing:
+            print("No abstract found. Use --generate to create one.")
+            return
+        result = improve_abstract(existing, paper, max_words=args.max_words)
+        print(f"Abstract score: {result['score']}/100")
+        print(f"Word count: {result['word_count']}")
+        if result["suggestions"]:
+            print("\nSuggestions:")
+            for s in result["suggestions"]:
+                print(f"  - {s}")
+
+
+def cmd_import_bib(args):
+    """Import references from BibTeX file."""
+    refs = import_bib(args.bib)
+    print(f"Imported {len(refs)} references:")
+    for ref in refs:
+        print(f"  {ref}")
+    if args.output:
+        paper = {"references": refs}
+        with open(args.output, "w") as f:
+            json.dump(paper, f, indent=2)
+        print(f"\nSaved to: {args.output}")
+
+
+def cmd_convert_refs(args):
+    """Convert reference citation style."""
+    paper = _load_paper(args.paper)
+    if not paper:
+        return
+    refs = paper.get("references", [])
+    converted = convert_style(refs, args.style)
+    for ref in converted:
+        print(ref)
+
+
+def cmd_templates(args):
+    """List or generate from paper templates."""
+    if args.generate:
+        skeleton = generate_skeleton(args.generate, topic=args.topic or "", journal_key=args.journal or "")
+        if args.output:
+            with open(args.output, "w") as f:
+                json.dump(skeleton, f, indent=2, ensure_ascii=False)
+            print(f"Skeleton saved to: {args.output}")
+        else:
+            print(json.dumps(skeleton, indent=2, ensure_ascii=False))
+    else:
+        print("Available templates:")
+        for t in list_templates():
+            print(f"  {t['key']:<20} {t['name']}")
+            print(f"  {'':20} {t['description']}")
+
+
 def _find_state(run_id=None):
     """Find pipeline state file."""
     if run_id:
@@ -183,6 +269,34 @@ def main():
     # journals
     subparsers.add_parser("journals", help="List supported journals")
 
+    # analytics
+    p_analytics = subparsers.add_parser("analytics", help="Paper readability & statistics")
+    p_analytics.add_argument("--paper", "-p", required=True, help="Paper content JSON")
+    p_analytics.add_argument("--verbose", "-v", action="store_true", help="Show detailed breakdown")
+
+    # abstract
+    p_abstract = subparsers.add_parser("abstract", help="Generate or improve abstract")
+    p_abstract.add_argument("--paper", "-p", required=True, help="Paper content JSON")
+    p_abstract.add_argument("--generate", "-g", action="store_true", help="Generate new abstract")
+    p_abstract.add_argument("--max-words", "-m", type=int, default=250, help="Max words")
+
+    # import-bib
+    p_bib = subparsers.add_parser("import-bib", help="Import BibTeX references")
+    p_bib.add_argument("--bib", "-b", required=True, help="Path to .bib file")
+    p_bib.add_argument("--output", "-o", help="Save as JSON")
+
+    # convert-refs
+    p_conv = subparsers.add_parser("convert-refs", help="Convert citation style")
+    p_conv.add_argument("--paper", "-p", required=True, help="Paper content JSON")
+    p_conv.add_argument("--style", "-s", required=True, choices=["numbered", "author_date", "apa"])
+
+    # templates
+    p_tmpl = subparsers.add_parser("templates", help="List or generate from templates")
+    p_tmpl.add_argument("--generate", "-g", help="Template key to generate from")
+    p_tmpl.add_argument("--topic", "-t", help="Research topic for skeleton")
+    p_tmpl.add_argument("--journal", "-j", help="Target journal key")
+    p_tmpl.add_argument("--output", "-o", help="Output JSON path")
+
     args = parser.parse_args()
 
     commands = {
@@ -194,6 +308,11 @@ def main():
         "cover-letter": cmd_cover_letter,
         "sources": cmd_sources,
         "journals": cmd_journals,
+        "analytics": cmd_analytics,
+        "abstract": cmd_abstract,
+        "import-bib": cmd_import_bib,
+        "convert-refs": cmd_convert_refs,
+        "templates": cmd_templates,
     }
 
     if args.command in commands:
