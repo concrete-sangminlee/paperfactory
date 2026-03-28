@@ -411,3 +411,89 @@ letter = generate_cover_letter(paper_content, "jweia", editor_name="Prof. Smith"
 # Reject 후 다른 저널로 재포맷
 new_content = reformat_paper(paper_content, "jweia", "eng_structures")
 ```
+
+### Citation Converter (`utils/citation_converter.py`)
+
+참고문헌 스타일을 변환할 때 사용한다 (저널 변경 시 필수).
+
+```python
+from utils.citation_converter import convert_style
+
+# numbered → author-date 변환
+ad_refs = convert_style(references_list, "author_date")
+
+# APA 스타일로 변환
+apa_refs = convert_style(references_list, "apa")
+
+# 다시 numbered로
+num_refs = convert_style(ad_refs, "numbered")
+```
+
+지원 스타일: `numbered` (Elsevier), `author_date` (Springer), `apa`.
+
+### Paper Templates (`utils/template_system.py`)
+
+Step 2에서 연구 설계 시 템플릿을 활용할 수 있다.
+
+```python
+from utils.template_system import list_templates, generate_skeleton
+
+# 사용 가능한 템플릿 목록
+templates = list_templates()
+# → [{"key": "ml_comparison", "name": "ML Model Comparison Study"}, ...]
+
+# 템플릿으로 논문 뼈대 생성
+skeleton = generate_skeleton("ml_comparison", topic="Wind pressure ML", journal_key="jweia")
+# → paper_content dict with pre-filled section headings and outlines
+```
+
+지원 템플릿: `ml_comparison`, `experimental`, `numerical`, `review`.
+
+### Paper Analytics (`utils/paper_analytics.py`)
+
+Step 5 완료 후 논문 품질을 정량적으로 분석한다.
+
+```python
+from utils.paper_analytics import analyze_paper
+
+result = analyze_paper(paper_content)
+print(result["summary"])
+# Total words: 6500
+# Flesch-Kincaid Grade: 14.2
+# Vocabulary richness (TTR): 0.345
+# Section balance: Good
+
+print(result["readability"]["academic_level"])  # "appropriate"
+print(result["vocabulary"]["top_words"][:5])     # 가장 많이 쓴 단어 TOP 5
+print(result["section_balance"]["section_proportions"])  # 섹션별 비율
+```
+
+### Abstract Generator (`utils/abstract_generator.py`)
+
+Step 5에서 초록을 자동 생성하거나 기존 초록을 개선할 때 사용한다.
+
+```python
+from utils.abstract_generator import generate_abstract, improve_abstract
+
+# 본문에서 초록 자동 생성
+abstract = generate_abstract(paper_content, max_words=250)
+
+# 기존 초록 품질 분석 + 개선 제안
+feedback = improve_abstract(existing_abstract, paper_content)
+print(feedback["score"])        # 0-100
+print(feedback["suggestions"])  # 개선 제안 목록
+```
+
+### BibTeX Import (`utils/bibtex_import.py`)
+
+외부 .bib 파일을 paper_content 참고문헌으로 변환할 때 사용한다.
+
+```python
+from utils.bibtex_import import import_bib
+
+# .bib 파일에서 참고문헌 로드
+references = import_bib("references.bib")
+# → ["[1] F. Bre, Prediction of wind...", "[2] Y. Weng, ML-based...", ...]
+
+paper_content["references"] = references
+```
