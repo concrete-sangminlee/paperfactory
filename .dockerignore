@@ -1,0 +1,11 @@
+.venv
+.env
+.mcp.json
+.claude
+__pycache__
+*.pyc
+.git
+.github
+outputs/figures/*
+outputs/data/*
+outputs/papers/*

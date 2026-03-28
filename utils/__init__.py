@@ -10,3 +10,5 @@ from utils.submission_utils import submission_checklist, generate_cover_letter, 
 from utils.research_advisor import recommend_statistical_tests, recommend_figure_type
 from utils.ai_reviewer import review_paper
 from utils.data_sources import list_sources, get_source, suggest_sources
+from utils.citation_converter import convert_style
+from utils.template_system import list_templates, get_template, generate_skeleton

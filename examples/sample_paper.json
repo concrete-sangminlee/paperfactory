@@ -1,0 +1,96 @@
+{
+  "title": "Machine Learning Prediction of Peak Wind Pressure Coefficients on Low-Rise Building Roofs",
+  "authors": "S.M. Lee, J.H. Kim",
+  "abstract": "This study investigates machine learning techniques for predicting peak wind pressure coefficients on low-rise building roofs using the TPU aerodynamic database. Three ML models were compared: Random Forest, Gradient Boosting, and Deep Neural Network. Results demonstrate that Random Forest achieved the highest prediction accuracy with R-squared of 0.999 and RMSE of 0.012. Feature importance analysis revealed that statistical features are the most influential predictors. The proposed framework provides a computationally efficient surrogate for wind tunnel testing.",
+  "keywords": "wind pressure; machine learning; TPU database; low-rise building; peak pressure; random forest",
+  "highlights": [
+    "ML models predict peak Cp with R-squared above 0.99",
+    "Random Forest outperforms Gradient Boosting and DNN",
+    "Statistical features dominate over spectral features",
+    "Framework enables rapid surrogate for wind tunnel testing"
+  ],
+  "sections": [
+    {
+      "heading": "INTRODUCTION",
+      "content": "Wind loads on low-rise buildings are a primary concern in structural engineering. This study develops ML models for peak wind pressure prediction using the TPU aerodynamic database. The proposed approach addresses gaps in systematic ML comparison and feature engineering for wind pressure prediction."
+    },
+    {
+      "heading": "METHODOLOGY",
+      "content": "The framework consists of data acquisition, feature engineering, ML training, and validation.",
+      "subsections": [
+        {
+          "heading": "Data acquisition",
+          "content": "Wind pressure data was obtained from the TPU database for a flat-roof low-rise building with 144 pressure taps across 36 wind directions."
+        },
+        {
+          "heading": "ML models",
+          "content": "Three models were compared: Random Forest (200 trees), Gradient Boosting (200 estimators), and DNN (128-64-32 architecture). All evaluated with 10-fold cross-validation."
+        }
+      ]
+    },
+    {
+      "heading": "RESULTS AND DISCUSSION",
+      "content": "Random Forest achieved the best performance with R-squared = 0.9999. Feature importance analysis shows statistical features dominate. Wind direction analysis confirms consistent accuracy across all orientations."
+    },
+    {
+      "heading": "CONCLUSIONS",
+      "content": "ML models effectively predict peak wind pressures. Random Forest is recommended for tabular wind pressure data. Future work should validate with actual TPU records and extend to other roof types."
+    }
+  ],
+  "tables": [
+    {
+      "caption": "Table 1. Model performance comparison.",
+      "headers": ["Model", "R-squared", "RMSE", "MAE"],
+      "rows": [
+        ["Random Forest", "0.9999", "0.0116", "0.0054"],
+        ["Gradient Boosting", "1.0000", "0.0087", "0.0041"],
+        ["Deep Neural Network", "0.9990", "0.0449", "0.0244"]
+      ]
+    },
+    {
+      "caption": "Table 2. Feature categories.",
+      "headers": ["Category", "Features", "Count"],
+      "rows": [
+        ["Statistical", "mean, RMS, min, max, skewness, kurtosis, peak factor", "7"],
+        ["Spectral", "dominant freq, bandwidth, centroid", "3"],
+        ["Spatial", "tap_x, tap_y, sin(theta), cos(theta)", "4"]
+      ]
+    },
+    {
+      "caption": "Table 3. Dataset parameters.",
+      "headers": ["Parameter", "Value"],
+      "rows": [
+        ["Pressure taps", "144"],
+        ["Wind directions", "36"],
+        ["Total samples", "5184"]
+      ]
+    }
+  ],
+  "references": [
+    "[1] F. Bre, J.M. Gimenez, V.D. Fachinotti, Prediction of wind pressure coefficients on building surfaces using artificial neural networks, Energy Build. 158 (2018) 1429-1441. https://doi.org/10.1016/j.enbuild.2017.11.045",
+    "[2] J. Tian et al., Low-rise gable roof buildings pressure prediction using deep neural networks, J. Wind Eng. Ind. Aerodyn. 196 (2020) 104026. https://doi.org/10.1016/j.jweia.2019.104026",
+    "[3] Y. Weng, S.G. Paal, Machine learning-based wind pressure prediction of low-rise non-isolated buildings, Eng. Struct. 258 (2022) 114148. https://doi.org/10.1016/j.engstruct.2022.114148",
+    "[4] D.P.P. Meddage et al., Explainable ML to predict external wind pressure of a low-rise building, J. Wind Eng. Ind. Aerodyn. 226 (2022) 105027. https://doi.org/10.1016/j.jweia.2022.105027",
+    "[5] Y. Huang et al., Prediction of mean and RMS wind pressure coefficients using deep neural networks, Eng. Struct. 274 (2023) 115149. https://doi.org/10.1016/j.engstruct.2022.115149",
+    "[6] Y. Huang et al., CNN-based wind pressure prediction on low-rise buildings, Eng. Struct. 309 (2024) 118078. https://doi.org/10.1016/j.engstruct.2024.118078",
+    "[7] K. Mostafa et al., ML techniques in structural wind engineering: A review, Appl. Sci. 12 (2022) 5232. https://doi.org/10.3390/app12105232",
+    "[8] T. Wu, R. Snaiki, Applications of ML to wind engineering, Front. Built Environ. 8 (2022) 811460. https://doi.org/10.3389/fbuil.2022.811460",
+    "[9] E. Shelley et al., Comparison of roof pressure measurements using NIST and TPU databases, J. Wind Eng. Ind. Aerodyn. 232 (2023) 105246. https://doi.org/10.1016/j.jweia.2022.105246",
+    "[10] H. Wu et al., Sparse-measurement-based peak wind pressure evaluation by super-resolution CNN, J. Wind Eng. Ind. Aerodyn. 242 (2023) 105574. https://doi.org/10.1016/j.jweia.2023.105574",
+    "[11] Q. Zhu et al., Physics-informed ML for surrogate modeling of wind pressure, Comput. Mech. 71 (2023) 481-491. https://doi.org/10.1007/s00466-022-02251-1",
+    "[12] L.-S. An, S. Jung, Data-driven prediction of wind pressure in complex terrains, Build. Environ. 265 (2024) 112022. https://doi.org/10.1016/j.buildenv.2024.112022",
+    "[13] B. Tong et al., Deep learning-based extension of wind pressure time series, J. Wind Eng. Ind. Aerodyn. 254 (2024) 105909. https://doi.org/10.1016/j.jweia.2024.105909",
+    "[14] F.M. Nav et al., Hybrid ML framework for wind pressure prediction, Comput.-Aided Civ. Infrastruct. Eng. (2025). https://doi.org/10.1111/mice.13488",
+    "[15] J. Wei et al., Transfer learning for wind pressure prediction, Build. Environ. 271 (2025) 112620. https://doi.org/10.1016/j.buildenv.2025.112620"
+  ],
+  "figure_captions": [
+    "Fig. 1. Mean Cp distribution on roof surface.",
+    "Fig. 2. Time history and PSD of Cp.",
+    "Fig. 3. Feature importance ranking.",
+    "Fig. 4. Measured vs predicted peak Cp.",
+    "Fig. 5. Cross-validation box plots.",
+    "Fig. 6. Wind direction error polar plot."
+  ],
+  "data_availability": "The TPU aerodynamic database is publicly available at https://db.wind.arch.t-kougei.ac.jp/.",
+  "acknowledgments": "The authors acknowledge Tokyo Polytechnic University for the aerodynamic database."
+}
