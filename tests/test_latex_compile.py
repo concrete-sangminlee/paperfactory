@@ -51,6 +51,12 @@ def _compile(tex_path):
         return f.read()
 
 
+def _tex_errors(log):
+    """TeX error lines start with "! " (informational text such as ascelike's
+    "OOPS! You have not loaded biblatex ..." must not count)."""
+    return re.findall(r"^! .*$", log, flags=re.MULTILINE)
+
+
 @pytest.fixture(scope="module")
 def figure_path(tmp_path_factory):
     path = tmp_path_factory.mktemp("figs") / "fig_1_model_comparison.png"
@@ -82,7 +88,7 @@ def paper():
 def test_every_journal_compiles(tmp_path, journal, paper, figure_path):
     tex, bib = generate_latex(paper, journal, [figure_path], output_dir=str(tmp_path))
     log = _compile(tex)
-    assert "! " not in log  # no TeX errors
+    assert not _tex_errors(log), _tex_errors(log)
     if paper.get("references"):
         assert not re.search(r"Citation `[^']+' .*undefined", log), "undefined citations"
 
@@ -104,4 +110,4 @@ def test_korean_paper_compiles(tmp_path, figure_path):
     }
     tex, _ = generate_latex(paper, "ksce_jce", [figure_path], output_dir=str(tmp_path))
     log = _compile(tex)
-    assert "! " not in log
+    assert not _tex_errors(log), _tex_errors(log)
