@@ -38,7 +38,9 @@ _NUMBERING_RE = re.compile(r"^\s*(?:\[\s*\d{1,4}\s*\]|\(\s*\d{1,4}\s*\)|\d{1,4}\
 # hyphens/dashes (page ranges, "EN 1993-1-3") or slashes.  Hangul may follow
 # ("2023년").  An optional disambiguation letter ("2023a") is allowed.
 _YEAR_RE = re.compile(
-    r"(?<![A-Za-z0-9\-‐-―/])((?:18|19|20)\d{2})([a-z])?(?![A-Za-z0-9\-‐-―/]|\.\d)"
+    r"(?<![A-Za-z0-9\-\u2010-\u2015/])"
+    r"((?:18|19|20)\d{2})([a-z])?"
+    r"(?![A-Za-z0-9\-\u2010-\u2015/]|\.\d)"
 )
 
 
@@ -98,7 +100,7 @@ def has_doi(ref: str) -> bool:
     return extract_doi(ref) is not None
 
 
-def _remove_identifiers(ref: str) -> str:
+def remove_identifiers(ref: str) -> str:
     """Blank out DOIs and URLs so their digits are not mistaken for years."""
     text = _DOI_SPAN_RE.sub(" ", ref or "")
     return _URL_RE.sub(" ", text)
@@ -125,7 +127,7 @@ def extract_year(ref: str, current_year: int | None = None) -> int | None:
         return None
     if current_year is None:
         current_year = datetime.date.today().year
-    text = _remove_identifiers(str(ref))
+    text = remove_identifiers(str(ref))
     text = strip_numbering(text)
 
     candidates = []
@@ -207,7 +209,7 @@ def validate_references(references: list[str], guideline: dict) -> list[dict]:
 def _normalize_for_compare(ref: str) -> str:
     """Normalise a reference for duplicate detection (numbering, case, punctuation)."""
     clean = strip_numbering(ref).lower()
-    clean = re.sub(r"[‐-―]", "-", clean)  # unify dashes
+    clean = re.sub(r"[\u2010-\u2015]", "-", clean)  # unify dashes
     clean = re.sub(r"[^\w\s]", " ", clean)  # punctuation is not significant
     return re.sub(r"\s+", " ", clean).strip()
 
@@ -238,9 +240,7 @@ def check_duplicates(references: list[str]) -> list[dict]:
         else:
             first = None
         if first is not None:
-            duplicates.append(
-                {"index_a": first, "index_b": i, "reference": ref, "reason": reason}
-            )
+            duplicates.append({"index_a": first, "index_b": i, "reference": ref, "reason": reason})
         seen_text.setdefault(norm, i)
         if doi:
             seen_doi.setdefault(doi, i)
@@ -256,7 +256,7 @@ _AUTHOR_DATE_MARKER_RE = re.compile(
 def _classify_reference(ref: str) -> str:
     if _NUMBERING_RE.match(ref) and not re.match(r"^\s*(?:18|19|20)\d{2}\.", ref):
         return "numbered"
-    head = _remove_identifiers(ref)
+    head = remove_identifiers(ref)
     if _AUTHOR_DATE_MARKER_RE.search(head):
         return "author-date"
     if re.match(r"^[A-Z][a-z]+.*\d{4}", ref):

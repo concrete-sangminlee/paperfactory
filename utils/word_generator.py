@@ -41,6 +41,10 @@ KOREAN_FONT = "Batang"
 
 _HANGUL_RE = re.compile("[ᄀ-ᇿ㄰-㆏ꥠ-꥿가-힯ힰ-퟿]")
 _BULLET_RE = re.compile(r"^\s*(?:[•●▪‣⁃*-])\s+")
+# Characters that are invalid in XML 1.0 (python-docx raises ValueError on them).
+# Form feed / vertical tab are common in text copied from PDFs and become spaces.
+_PAGE_BREAK_CHARS_RE = re.compile("[\x0b\x0c]")
+_XML_INVALID_RE = re.compile("[\x00-\x08\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 
 
 def _contains_hangul(text) -> bool:
@@ -57,7 +61,7 @@ def _as_text(value, sep: str = ", ") -> str:
     if value is None:
         return ""
     if isinstance(value, str):
-        return value
+        return _clean_text(value)
     if isinstance(value, dict):
         if "name" in value:
             return _as_text(value["name"], sep)
@@ -65,7 +69,23 @@ def _as_text(value, sep: str = ", ") -> str:
     if isinstance(value, (list, tuple)):
         parts = (_as_text(v, sep).strip() for v in value)
         return sep.join(p for p in parts if p)
-    return str(value)
+    return _clean_text(str(value))
+
+
+def _clean_text(text: str) -> str:
+    """Drop characters that cannot be stored in .docx XML or PDF text."""
+    return _XML_INVALID_RE.sub("", _PAGE_BREAK_CHARS_RE.sub(" ", text))
+
+
+def _all_text(value) -> str:
+    """All strings inside a (nested) ``paper_content`` value, newline-joined."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        value = list(value.values())
+    if isinstance(value, (list, tuple, set)):
+        return "\n".join(_all_text(v) for v in value)
+    return "" if value is None else str(value)
 
 
 def _as_list(value) -> list:
@@ -255,10 +275,14 @@ def _output_stem(paper_content: dict, journal_key: str) -> str:
     return f"{_safe_stem(paper_content.get('title'))}_{resolve_journal_key(journal_key)}"
 
 
-def _resolve_output_dir(output_dir) -> str:
-    """Absolute output directory (created if needed)."""
+def _resolve_output_dir(output_dir, default: str | None = None) -> str:
+    """Absolute output directory (created if needed).
+
+    *default* is the calling module's ``DEFAULT_PAPERS_DIR`` (looked up at call
+    time so that it can be monkeypatched per module).
+    """
     if output_dir is None or output_dir == "":
-        path = DEFAULT_PAPERS_DIR
+        path = os.path.abspath(default or DEFAULT_PAPERS_DIR)
     else:
         path = os.path.abspath(os.path.expanduser(os.fspath(output_dir)))
     os.makedirs(path, exist_ok=True)
@@ -468,7 +492,7 @@ def _document_layout(guideline: dict) -> dict:
     # Re-order the blocks the guideline lists, keeping unlisted ones in their default slot.
     listed = [b for b in order if position(b) is not None]
     slots = [i for i, b in enumerate(order) if position(b) is not None]
-    for slot, block in zip(slots, sorted(listed, key=position)):
+    for slot, block in zip(slots, sorted(listed, key=position), strict=True):
         order[slot] = block
 
     labels = dict(_DEFAULT_LABELS)
@@ -780,7 +804,7 @@ def generate_word(
     """
     paper_content = _check_content(paper_content)
     guideline = load_guideline(journal_key)
-    output_dir = _resolve_output_dir(output_dir)
+    output_dir = _resolve_output_dir(output_dir, DEFAULT_PAPERS_DIR)
 
     formatting = dict(guideline.get("formatting") or {})
     formatting["font"] = _primary_font(formatting.get("font"))
@@ -896,7 +920,7 @@ def generate_word(
         tbl = doc.add_table(rows=len(notation), cols=2)
         tbl.style = "Table Grid"
         for i, (symbol, definition) in enumerate(notation):
-            for cell, text in zip(tbl.rows[i].cells, (symbol, definition)):
+            for cell, text in zip(tbl.rows[i].cells, (symbol, definition), strict=True):
                 cell.text = ""
                 _apply_font(cell.paragraphs[0].add_run(text), formatting)
         if no_vertical_borders:
