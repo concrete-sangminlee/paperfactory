@@ -62,6 +62,10 @@ include = ["utils*", "pipeline*"]
 target-version = "py310"
 line-length = 100
 
+[tool.ruff.format]
+# Code blocks in README.md / CLAUDE.md are illustrative snippets; keep them as written.
+exclude = ["*.md"]
+
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
 ignore = [
