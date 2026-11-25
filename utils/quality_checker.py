@@ -1,12 +1,8 @@
 """Validate generated paper content against journal quality criteria."""
 
-import json
-import os
 import re
 
-GUIDELINES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "guidelines"
-)
+from utils.guidelines import GUIDELINES_DIR, load_guideline  # noqa: F401  (re-exported)
 
 # Minimum thresholds from CLAUDE.md pipeline requirements
 MIN_BODY_WORDS = 6000
@@ -16,15 +12,6 @@ MIN_REFERENCES = 15
 MIN_RECENT_RATIO = 0.5  # 50% of references within 5 years
 MIN_COMPARISONS = 3
 MIN_LIMITATIONS = 3
-
-
-def load_guideline(journal_key: str) -> dict:
-    """Load a journal guideline JSON file."""
-    path = os.path.join(GUIDELINES_DIR, f"{journal_key}.json")
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Guideline not found: {path}")
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
 
 
 def check_paper(paper_content: dict, journal_key: str, figures: list = None) -> dict:

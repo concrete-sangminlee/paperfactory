@@ -1,12 +1,9 @@
 """Submission workflow utilities: checklist, cover letter, journal reformatting."""
 
-import json
-import os
 from datetime import datetime
 
-GUIDELINES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "guidelines"
-)
+from utils.guidelines import GUIDELINES_DIR  # noqa: F401  (re-exported)
+from utils.guidelines import load_guideline as _load_guideline
 
 
 def submission_checklist(paper_content: dict, journal_key: str, figures: list = None) -> dict:
@@ -173,14 +170,6 @@ def reformat_paper(paper_content: dict, from_journal: str, to_journal: str) -> d
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
-
-
-def _load_guideline(journal_key: str) -> dict:
-    path = os.path.join(GUIDELINES_DIR, f"{journal_key}.json")
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Guideline not found: {path}")
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
 
 
 def _check(description: str, passed: bool, note: str = "") -> dict:

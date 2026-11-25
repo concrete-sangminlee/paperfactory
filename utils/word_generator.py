@@ -3,7 +3,6 @@
 Supports all journals defined in guidelines/*.json.
 """
 
-import json
 import os
 import re
 
@@ -13,9 +12,8 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt
 
-GUIDELINES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "guidelines"
-)
+from utils.guidelines import GUIDELINES_DIR, load_guideline  # noqa: F401  (re-exported)
+
 DEFAULT_PAPERS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outputs", "papers"
 )
@@ -24,13 +22,6 @@ DEFAULT_PAPERS_DIR = os.path.join(
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
-
-
-def load_guideline(journal_key: str) -> dict:
-    """Load and return the guideline JSON for *journal_key*."""
-    path = os.path.join(GUIDELINES_DIR, f"{journal_key}.json")
-    with open(path, "r") as f:
-        return json.load(f)
 
 
 # ---------------------------------------------------------------------------
