@@ -132,8 +132,13 @@ npm install -g @anthropic-ai/claude-code
 # Clone and set up PaperFactory
 git clone https://github.com/concrete-sangminlee/paperfactory.git paperfactory
 cd paperfactory
-pip install -r requirements.txt
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[ui]"        # installs the `paperfactory` CLI + Streamlit UI
 ```
+
+> Use an **editable** install (`-e`): the CLI and utilities read the bundled
+> `guidelines/` folder from the clone. Custom journal files can live elsewhere via
+> `PAPERFACTORY_GUIDELINES_DIR`.
 
 ### 2. Run
 
@@ -190,7 +195,7 @@ graph TB
 
     subgraph "guidelines/"
         direction TB
-        B["10 Journal JSONs\nManuscript structure\nFormatting rules\nCitation styles"]
+        B["15 Journal JSONs\nloaded via utils/guidelines.py\n(aliases, caching, schema check)"]
     end
 
     subgraph "utils/"
@@ -205,7 +210,7 @@ graph TB
         direction TB
         G["figures/ — PNG plots"]
         H["data/ — CSV results"]
-        I["papers/ — .docx / .tex"]
+        I["papers/ — .docx / .tex / .pdf\n+ pipeline run state"]
     end
 
     A --> |reads| B
@@ -508,14 +513,63 @@ pipeline.complete_step(research_design={...})
 pipeline = PaperPipeline.resume("outputs/papers/run_xxx/pipeline_state.json")
 ```
 
+Step back when results need rework (e.g. Step 4 → Step 3), list runs, or locate the latest one:
+
+```python
+from pipeline import PipelineStep, find_state, list_runs
+
+pipeline.revert_to(PipelineStep.CODE_EXECUTION, note="R² below target; retune model")
+print(list_runs())          # newest first: run_id, topic, journal, step, progress
+latest = find_state()       # path to the most recent pipeline_state.json
+```
+
+Runs are stored under `outputs/papers/<run_id>/` (override with `PAPERFACTORY_RUNS_DIR`).
+State files are written atomically and journal keys are validated on creation.
+
+## Command-Line Interface
+
+`pip install -e .` installs the `paperfactory` command (or run `python cli.py ...`).
+Every command exits non-zero on errors; `--strict` turns quality gates into exit codes for
+CI, and `--json` gives machine-readable output.
+
+```bash
+paperfactory journals                                   # 15 supported journals
+paperfactory new -t "ML wind pressure prediction" -j jweia
+paperfactory status                                     # most recent run (or -r RUN_ID)
+paperfactory runs                                       # all saved runs
+
+paperfactory check      -p paper.json -j jweia --strict # quality gate (exit 1 on FAIL)
+paperfactory review     -p paper.json -j jweia          # simulated peer review
+paperfactory checklist  -p paper.json -j jweia          # submission readiness
+paperfactory validate-refs -p paper.json -j jweia       # DOI/format/duplicate check
+paperfactory export     -p paper.json -j jweia --format docx latex pdf -o out/
+paperfactory reformat   -p paper.json --from jweia --to eng_structures -o new.json
+paperfactory cover-letter -p paper.json -j jweia -e "Prof. Kim" -o letter.txt
+
+paperfactory analytics  -p paper.json -v                # readability & balance
+paperfactory abstract   -p paper.json [-g]              # score or generate abstract
+paperfactory import-bib -b refs.bib -o refs.json
+paperfactory convert-refs -p paper.json -s apa
+paperfactory templates [-g ml_comparison -t "topic" -j jweia -o skeleton.json]
+paperfactory sources    -t "seismic damage of RC frames"
+```
+
+Journal keys are case-insensitive and accept aliases (`jcsr`, `cbm`, `ccc`, `aic`, …);
+typos get a "Did you mean …?" hint.
+
 ## Web UI
 
 ```bash
-pip install streamlit
+pip install -e ".[ui]"
 streamlit run app.py
 ```
 
-5 tabs: Pipeline, Quality Check, AI Review, Data Sources, Submission Prep.
+7 tabs: Pipeline (saved runs + data-source suggestions), Quality Check, AI Review,
+Data Sources, Submission (checklist + downloadable cover letter), Export (Word/PDF
+download) and Journals. Paper JSON can be pasted or uploaded.
+
+Docker: `docker build -t paperfactory . && docker run -p 8501:8501 paperfactory`
+(non-root user, health check on `/_stcore/health`).
 
 ---
 
@@ -571,14 +625,20 @@ paperfactory/
 ├── CLAUDE.md               # Agent instructions (pipeline + quality criteria)
 ├── README.md
 ├── LICENSE                 # MIT License
+├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── app.py                  # Streamlit web UI (streamlit run app.py)
-├── requirements.txt        # Dependencies
+├── cli.py                  # `paperfactory` command-line interface (18 commands)
+├── pyproject.toml          # Packaging, ruff, pytest, coverage config
+├── requirements.txt        # Runtime dependencies (requirements-dev.txt for dev tools)
+├── Dockerfile              # Streamlit UI container
 ├── .mcp.json               # PaperBanana MCP config (create during setup, gitignored)
 ├── .env                    # API keys (create during setup, gitignored)
 ├── guidelines/             # 15 journal guideline JSON files
 ├── pipeline/
 │   └── orchestrator.py     # 5-step pipeline state management
 ├── utils/
+│   ├── guidelines.py       # Journal guideline registry (aliases, cache, validation)
 │   ├── word_generator.py   # Word document builder
 │   ├── latex_generator.py  # LaTeX + BibTeX builder (smart BibTeX parser)
 │   ├── pdf_generator.py    # Direct PDF output (no LaTeX needed)
@@ -595,13 +655,11 @@ paperfactory/
 │   ├── template_system.py  # 4 paper templates (ML, experimental, numerical, review)
 │   ├── paper_analytics.py  # Readability scores, vocabulary, section balance
 │   ├── abstract_generator.py # Auto-generate/improve abstracts
-│   └── bibtex_import.py    # Import .bib files into paper_content
-├── tests/
-│   ├── conftest.py         # Shared test config (sys.path setup)
-│   ├── test_figure_utils.py
-│   ├── test_latex_generator.py
-│   ├── test_reference_utils.py
-│   └── test_word_generator.py
+│   ├── bibtex_import.py    # Import .bib files into paper_content
+│   └── equation_utils.py   # Equation extraction, numbering, rendering
+├── tests/                  # pytest suite: one file per module + CLI, web UI, guidelines,
+│   │                       # integration tests (see CI badge)
+│   └── conftest.py         # sys.path, Agg backend, isolated pipeline runs dir
 └── outputs/
     ├── figures/            # Generated plots (DPI 300)
     ├── data/               # Result CSVs and JSONs
@@ -616,7 +674,9 @@ paperfactory/
 |:--------|:---------|
 | `claude: command not found` | `npm install -g @anthropic-ai/claude-code` and add Node.js bin to PATH |
 | Authentication errors | Run `claude login` and follow the browser prompt |
-| `ModuleNotFoundError` | `pip install -r requirements.txt` (use a virtual environment) |
+| `ModuleNotFoundError` | `pip install -e ".[ui]"` inside a virtual environment |
+| `Guideline not found for journal ...` | Run `paperfactory journals` for valid keys; the error suggests the closest match |
+| `No guideline files found` | Install from a clone with `pip install -e .`, or set `PAPERFACTORY_GUIDELINES_DIR` |
 | WebSearch not working | Allow web access when prompted. Requires Claude Max Plan. |
 
 ---

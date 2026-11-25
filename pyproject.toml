@@ -1,10 +1,10 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "paperfactory"
-version = "1.0.0"
+version = "1.1.0"
 description = "AI agent for civil engineering research paper generation"
 readme = "README.md"
 license = {text = "MIT"}
@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
@@ -39,7 +40,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ui = ["streamlit>=1.30.0"]
-dev = ["pytest>=7.0", "ruff>=0.1.0", "pre-commit>=3.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff==0.16.9", "pre-commit>=3.0"]
 
 [project.scripts]
 paperfactory = "cli:main"
@@ -47,6 +48,12 @@ paperfactory = "cli:main"
 [project.urls]
 Homepage = "https://github.com/concrete-sangminlee/paperfactory"
 Repository = "https://github.com/concrete-sangminlee/paperfactory"
+Changelog = "https://github.com/concrete-sangminlee/paperfactory/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+# cli.py lives at the repository root next to guidelines/ (use an editable install:
+# `pip install -e .`, so the bundled guidelines/ folder stays importable).
+py-modules = ["cli"]
 
 [tool.setuptools.packages.find]
 include = ["utils*", "pipeline*"]
@@ -56,7 +63,36 @@ target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "B008",   # function calls in defaults (argparse/streamlit idioms)
+    "UP007",  # keep Optional[...] readable for py310 users
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Demo scripts embed full manuscript prose in string literals and add the repo
+# root to sys.path before importing utils/.
+"examples/**/*.py" = ["E501", "E402"]
+# Tests deliberately construct long fixture strings.
+"tests/**/*.py" = ["E501"]
+# Package facade re-exports the public API.
+"utils/__init__.py" = ["F401"]
+"pipeline/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["utils", "pipeline", "cli"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore::DeprecationWarning:docx.*",
+]
+
+[tool.coverage.run]
+source = ["utils", "pipeline", "cli"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

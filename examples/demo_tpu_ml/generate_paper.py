@@ -11,18 +11,20 @@ This script executes Steps 2-5 of the PaperFactory pipeline:
   Step 5: Paper Assembly + Quality Check
 """
 
-import sys
-import os
 import json
+import os
+import sys
+
+import matplotlib
 import numpy as np
 import pandas as pd
 from scipy import signal, stats
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -30,9 +32,9 @@ import matplotlib.pyplot as plt
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
-from utils.figure_utils import setup_style, save_figure, get_colors, get_figsize
-from utils.word_generator import generate_word
+from utils.figure_utils import get_colors, get_figsize, save_figure, setup_style
 from utils.quality_checker import check_paper
+from utils.word_generator import generate_word
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 setup_style()
@@ -53,20 +55,32 @@ print("=" * 60)
 print("\n[Step 2] Research Design")
 print("-" * 40)
 
-PAPER_TITLE = ("Machine Learning Prediction of Peak Wind Pressure Coefficients "
-               "on Low-Rise Building Roofs Using the TPU Aerodynamic Database")
+PAPER_TITLE = (
+    "Machine Learning Prediction of Peak Wind Pressure Coefficients "
+    "on Low-Rise Building Roofs Using the TPU Aerodynamic Database"
+)
 
 RESEARCH_DESIGN = {
     "title": PAPER_TITLE,
-    "hypothesis": ("Ensemble ML models (Random Forest, Gradient Boosting) can predict "
-                   "peak wind pressure coefficients on low-rise building roofs with "
-                   "R² > 0.95, outperforming single-layer neural networks, when trained "
-                   "on statistical and spectral features from the TPU database."),
+    "hypothesis": (
+        "Ensemble ML models (Random Forest, Gradient Boosting) can predict "
+        "peak wind pressure coefficients on low-rise building roofs with "
+        "R² > 0.95, outperforming single-layer neural networks, when trained "
+        "on statistical and spectral features from the TPU database."
+    ),
     "methodology": "Supervised ML regression with 10-fold cross-validation",
     "models": ["Random Forest", "Gradient Boosting (XGBoost/GBR)", "Deep Neural Network"],
     "target": "Peak suction Cp (minimum Cp)",
     "features": {
-        "statistical": ["mean_Cp", "rms_Cp", "min_Cp", "max_Cp", "skewness", "kurtosis", "peak_factor"],
+        "statistical": [
+            "mean_Cp",
+            "rms_Cp",
+            "min_Cp",
+            "max_Cp",
+            "skewness",
+            "kurtosis",
+            "peak_factor",
+        ],
         "spectral": ["dominant_freq", "spectral_bandwidth", "spectral_centroid"],
         "spatial": ["tap_x", "tap_y", "wind_angle_sin", "wind_angle_cos"],
     },
@@ -76,7 +90,9 @@ RESEARCH_DESIGN = {
 
 print(f"  Title: {PAPER_TITLE}")
 print(f"  Models: {', '.join(RESEARCH_DESIGN['models'])}")
-print(f"  Planned: {RESEARCH_DESIGN['planned_figures']} figures, {RESEARCH_DESIGN['planned_tables']} tables")
+print(
+    f"  Planned: {RESEARCH_DESIGN['planned_figures']} figures, {RESEARCH_DESIGN['planned_tables']} tables"
+)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 3: CODE EXECUTION
@@ -122,14 +138,17 @@ def extract_features(Cp_data, dt_val):
     for i in range(n_taps_local):
         cp = Cp_data[i, :]
         feat = {
-            "mean_cp": np.mean(cp), "rms_cp": np.std(cp),
-            "min_cp": np.min(cp), "max_cp": np.max(cp),
-            "skewness": stats.skew(cp), "kurtosis": stats.kurtosis(cp),
+            "mean_cp": np.mean(cp),
+            "rms_cp": np.std(cp),
+            "min_cp": np.min(cp),
+            "max_cp": np.max(cp),
+            "skewness": stats.skew(cp),
+            "kurtosis": stats.kurtosis(cp),
             "peak_factor": (np.min(cp) - np.mean(cp)) / max(np.std(cp), 1e-8),
         }
         f, psd = signal.welch(cp, fs=1 / dt_val, nperseg=512)
         feat["dominant_freq"] = f[np.argmax(psd)]
-        feat["spectral_bandwidth"] = np.sqrt(np.sum(f ** 2 * psd) / max(np.sum(psd), 1e-8))
+        feat["spectral_bandwidth"] = np.sqrt(np.sum(f**2 * psd) / max(np.sum(psd), 1e-8))
         feat["spectral_centroid"] = np.sum(f * psd) / max(np.sum(psd), 1e-8)
         features.append(feat)
     return pd.DataFrame(features)
@@ -157,16 +176,22 @@ print(f"  Dataset: {X.shape[0]} samples, {X.shape[1]} features")
 print("  Training ML models with 10-fold CV...")
 
 models = {
-    "Random Forest": RandomForestRegressor(n_estimators=200, max_depth=12, random_state=42, n_jobs=-1),
-    "Gradient Boosting": GradientBoostingRegressor(n_estimators=200, max_depth=6, learning_rate=0.1, random_state=42),
-    "Deep Neural Network": MLPRegressor(hidden_layer_sizes=(128, 64, 32), max_iter=500, random_state=42, early_stopping=True),
+    "Random Forest": RandomForestRegressor(
+        n_estimators=200, max_depth=12, random_state=42, n_jobs=-1
+    ),
+    "Gradient Boosting": GradientBoostingRegressor(
+        n_estimators=200, max_depth=6, learning_rate=0.1, random_state=42
+    ),
+    "Deep Neural Network": MLPRegressor(
+        hidden_layer_sizes=(128, 64, 32), max_iter=500, random_state=42, early_stopping=True
+    ),
 }
 
 cv_results = {name: {"R2": [], "RMSE": [], "MAE": []} for name in models}
 y_pred_all = {name: np.zeros_like(y) for name in models}
 
 kf = KFold(n_splits=10, shuffle=True, random_state=42)
-for fold, (train_idx, test_idx) in enumerate(kf.split(X_scaled)):
+for _fold, (train_idx, test_idx) in enumerate(kf.split(X_scaled)):
     for name, model in models.items():
         clone = type(model)(**model.get_params())
         clone.fit(X_scaled[train_idx], y[train_idx])
@@ -260,9 +285,15 @@ for idx, name in enumerate(models):
     ax.set_xlabel("Measured Peak $C_p$")
     ax.set_ylabel("Predicted Peak $C_p$")
     ax.set_title(name, fontsize=10)
-    ax.text(0.05, 0.95, f"$R^2$ = {overall[name]['R2']:.4f}\nRMSE = {overall[name]['RMSE']:.4f}",
-            transform=ax.transAxes, va="top", fontsize=9,
-            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8))
+    ax.text(
+        0.05,
+        0.95,
+        f"$R^2$ = {overall[name]['R2']:.4f}\nRMSE = {overall[name]['RMSE']:.4f}",
+        transform=ax.transAxes,
+        va="top",
+        fontsize=9,
+        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+    )
     ax.set_aspect("equal")
 p = save_figure(fig, "fig_4_model_comparison", output_dir=FIG_DIR)
 figure_paths.append(p)
@@ -275,7 +306,7 @@ metric_labels = ["$R^2$", "RMSE", "MAE"]
 for ax_idx, metric in enumerate(["R2", "RMSE", "MAE"]):
     data = [cv_results[name][metric] for name in models]
     bp = axes[ax_idx].boxplot(data, patch_artist=True, widths=0.6)
-    for patch, c in zip(bp["boxes"], colors[:3]):
+    for patch, c in zip(bp["boxes"], colors[:3], strict=False):
         patch.set_facecolor(c)
         patch.set_alpha(0.7)
     for med in bp["medians"]:
@@ -292,7 +323,7 @@ print(f"    Fig 5: {os.path.basename(p)}")
 # Fig 6: Wind direction polar error
 angles_arr = np.arange(0, 360, 10)
 rmse_per_angle = []
-for i, angle in enumerate(angles_arr):
+for i, _angle in enumerate(angles_arr):
     s, e = i * n_taps, (i + 1) * n_taps
     rmse_per_angle.append(np.sqrt(mean_squared_error(y[s:e], y_pred_all["Random Forest"][s:e])))
 fig, ax = plt.subplots(figsize=get_figsize("single"), subplot_kw={"projection": "polar"})
@@ -310,7 +341,9 @@ print(f"    Fig 6: {os.path.basename(p)}")
 # Fig 7: Residual analysis
 residuals = y - y_pred_all["Random Forest"]
 fig, axes = plt.subplots(1, 3, figsize=get_figsize("double"))
-axes[0].scatter(y_pred_all["Random Forest"], residuals, s=2, alpha=0.2, color=colors[0], rasterized=True)
+axes[0].scatter(
+    y_pred_all["Random Forest"], residuals, s=2, alpha=0.2, color=colors[0], rasterized=True
+)
 axes[0].axhline(0, color="black", linewidth=0.8, linestyle="--")
 axes[0].set_xlabel("Predicted Peak $C_p$")
 axes[0].set_ylabel("Residual")
@@ -335,7 +368,15 @@ print(f"    Fig 7: {os.path.basename(p)}")
 # Fig 8: Peak Cp distribution comparison
 fig, ax = plt.subplots(figsize=get_figsize("single"))
 ax.hist(y, bins=50, alpha=0.6, color=colors[0], label="Measured", density=True, edgecolor="white")
-ax.hist(y_pred_all["Random Forest"], bins=50, alpha=0.6, color=colors[1], label="RF Predicted", density=True, edgecolor="white")
+ax.hist(
+    y_pred_all["Random Forest"],
+    bins=50,
+    alpha=0.6,
+    color=colors[1],
+    label="RF Predicted",
+    density=True,
+    edgecolor="white",
+)
 ax.set_xlabel("Peak $C_p$")
 ax.set_ylabel("Density")
 ax.set_title("Distribution: Measured vs Predicted Peak $C_p$")
@@ -1007,7 +1048,12 @@ paper_content = {
             "caption": "Table 1. Overall prediction performance of three ML models (10-fold CV).",
             "headers": ["Model", "R-squared", "RMSE", "MAE"],
             "rows": [
-                [name, f"{overall[name]['R2']:.4f}", f"{overall[name]['RMSE']:.4f}", f"{overall[name]['MAE']:.4f}"]
+                [
+                    name,
+                    f"{overall[name]['R2']:.4f}",
+                    f"{overall[name]['RMSE']:.4f}",
+                    f"{overall[name]['MAE']:.4f}",
+                ]
                 for name in models
             ],
         },
@@ -1015,10 +1061,12 @@ paper_content = {
             "caption": "Table 2. Cross-validation statistics (mean +/- std of 10 folds).",
             "headers": ["Model", "R-squared", "RMSE", "MAE"],
             "rows": [
-                [name,
-                 f"{np.mean(cv_results[name]['R2']):.4f} +/- {np.std(cv_results[name]['R2']):.4f}",
-                 f"{np.mean(cv_results[name]['RMSE']):.4f} +/- {np.std(cv_results[name]['RMSE']):.4f}",
-                 f"{np.mean(cv_results[name]['MAE']):.4f} +/- {np.std(cv_results[name]['MAE']):.4f}"]
+                [
+                    name,
+                    f"{np.mean(cv_results[name]['R2']):.4f} +/- {np.std(cv_results[name]['R2']):.4f}",
+                    f"{np.mean(cv_results[name]['RMSE']):.4f} +/- {np.std(cv_results[name]['RMSE']):.4f}",
+                    f"{np.mean(cv_results[name]['MAE']):.4f} +/- {np.std(cv_results[name]['MAE']):.4f}",
+                ]
                 for name in models
             ],
         },
@@ -1026,7 +1074,11 @@ paper_content = {
             "caption": "Table 3. Feature engineering summary (14 input features).",
             "headers": ["Category", "Features", "Count"],
             "rows": [
-                ["Statistical", "mean_Cp, rms_Cp, min_Cp, max_Cp, skewness, kurtosis, peak_factor", "7"],
+                [
+                    "Statistical",
+                    "mean_Cp, rms_Cp, min_Cp, max_Cp, skewness, kurtosis, peak_factor",
+                    "7",
+                ],
                 ["Spectral", "dominant_freq, spectral_bandwidth, spectral_centroid", "3"],
                 ["Spatial/Directional", "tap_x, tap_y, wind_angle_sin, wind_angle_cos", "4"],
             ],
