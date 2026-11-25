@@ -99,7 +99,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             texlive-latex-base texlive-latex-recommended texlive-latex-extra \
-            texlive-publishers texlive-lang-korean texlive-fonts-recommended cm-super
+            texlive-publishers texlive-lang-korean texlive-fonts-recommended cm-super \
+            texlive-fonts-extra  # newtx fonts required by the ascelike class (ASCE)
       - name: Install package
         run: pip install -e ".[dev]"
       - name: Compile LaTeX export for every journal

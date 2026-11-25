@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 
 from utils.guidelines import UnknownJournalError, load_guideline, resolve_journal_key
 from utils.word_generator import (
@@ -32,7 +33,6 @@ from utils.word_generator import (
     _journal_features,
     _line_spacing_value,
     _notation_entries,
-    _output_stem,
     _parse_margin,
     _resolve_output_dir,
     _safe_stem,
@@ -40,6 +40,20 @@ from utils.word_generator import (
     _strip_heading_number,
     _table_parts,
 )
+
+
+def _latex_stem(paper_content: dict, journal_key: str) -> str:
+    """ASCII-only ``<title>_<journal>`` stem for the .tex/.bib pair.
+
+    BibTeX cannot read a ``\\bibdata`` name containing non-ASCII characters (kotex
+    turns Hangul into ``\\unihangulchar`` macros), so accents are folded to ASCII,
+    other scripts are dropped, and an empty result falls back to ``paper``.
+    """
+    title = unicodedata.normalize("NFKD", _safe_stem(paper_content.get("title"), fallback=""))
+    title = title.encode("ascii", "ignore").decode("ascii")
+    title = re.sub(r"_+", "_", re.sub(r"[^A-Za-z0-9_-]", "", title)).strip("_-")
+    return f"{title or 'paper'}_{resolve_journal_key(journal_key)}"
+
 
 DEFAULT_PAPERS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outputs", "papers"
@@ -335,7 +349,7 @@ def generate_latex(
     guideline = load_guideline(journal_key)
     key = resolve_journal_key(journal_key)
     output_dir = _resolve_output_dir(output_dir, DEFAULT_PAPERS_DIR)
-    stem = _output_stem(paper_content, key)
+    stem = _latex_stem(paper_content, key)
 
     doc_class = _get_document_class(key)
     formatting = guideline.get("formatting") or {}

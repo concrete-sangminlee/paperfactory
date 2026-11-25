@@ -261,7 +261,10 @@ def test_korean_paper_loads_kotex(tmp_path):
     tex_path, _, tex, _ = _gen(tmp_path, content, journal="ksce_jce")
     assert r"\usepackage{kotex}" in tex
     assert "철근콘크리트 보의 전단강도" in tex
-    assert os.path.basename(tex_path) == "철근콘크리트_보의_전단강도_ksce_jce.tex"
+    # The title stays Korean inside the document, but the .tex/.bib names must be ASCII:
+    # BibTeX cannot open a \bibdata name made of kotex \unihangulchar macros (found by
+    # compiling with TeX Live in CI).
+    assert os.path.basename(tex_path) == "paper_ksce_jce.tex"
     _, _, en, _ = _gen(tmp_path / "en", journal="ksce_jce")
     assert "kotex" not in en
 
@@ -438,3 +441,18 @@ def test_default_output_dir_is_module_constant(tmp_path):
     # Patching latex_generator.DEFAULT_PAPERS_DIR must redirect the output.
     tex, bib = generate_latex(BASE, "jweia")
     assert os.path.dirname(tex) == os.path.dirname(bib) == str(tmp_path / "default_papers")
+
+
+@pytest.mark.parametrize(
+    "title,stem",
+    [
+        ("Évaluation sismique des ponts", "Evaluation_sismique_des_ponts_eng_structures"),
+        ("철근콘크리트 보 and RC beams", "and_RC_beams_eng_structures"),
+        ("Shear: V/(b·d) ≤ 0.5√f'c", "Shear_Vbd_05fc_eng_structures"),
+    ],
+)
+def test_tex_and_bib_names_are_ascii(tmp_path, title, stem):
+    tex_path, bib_path, tex, _ = _gen(tmp_path, {**BASE, "title": title}, journal="eng_structures")
+    assert os.path.basename(tex_path) == f"{stem}.tex"
+    assert os.path.basename(bib_path) == f"{stem}.bib"
+    assert f"\\bibliography{{{stem}}}" in tex

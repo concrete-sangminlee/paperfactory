@@ -128,7 +128,8 @@ def save_figure(
         output_dir = FIGURES_DIR
     fmt = str(fmt).strip().lstrip(".").lower() or "png"
     filename = name if name.lower().endswith(f".{fmt}") else f"{name}.{fmt}"
-    path = os.path.join(output_dir, filename)
+    # normpath: names like "sub/dir/fig" must not yield mixed separators on Windows
+    path = os.path.normpath(os.path.join(output_dir, filename))
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
