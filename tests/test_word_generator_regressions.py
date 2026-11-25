@@ -12,8 +12,17 @@ from docx.oxml.ns import qn
 from docx.shared import Pt
 from PIL import Image
 
+from utils import word_generator
 from utils.guidelines import UnknownJournalError, available_journal_keys
 from utils.word_generator import generate_word
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (word_generator,):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
+
 
 BASE = {
     "title": "Regression Paper",
@@ -373,3 +382,8 @@ def test_full_paper_for_every_journal(tmp_path, journal_key):
     assert len(doc.inline_shapes) == 1 and len(doc.tables) == 2
     assert any("Results." in t for t in texts)
     assert any(t.lower() == "references" for t in texts)
+
+
+def test_default_output_dir_is_module_constant(tmp_path):
+    path = generate_word(BASE, "jweia")
+    assert os.path.dirname(path) == str(tmp_path / "default_papers")

@@ -1,8 +1,18 @@
 import os
 
+import pytest
 from docx import Document
 
+from utils import word_generator
 from utils.word_generator import generate_word, load_guideline
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (word_generator,):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
+
 
 MINIMAL_CONTENT = {
     "title": "Test Paper Title",

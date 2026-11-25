@@ -2,6 +2,7 @@
 
 import pytest
 
+from utils import word_generator
 from utils.guidelines import load_guideline
 from utils.word_generator import (
     _all_text,
@@ -25,6 +26,13 @@ from utils.word_generator import (
     _strip_heading_number,
     _table_parts,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (word_generator,):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
 
 
 class TestNormalisation:
@@ -63,7 +71,10 @@ class TestNormalisation:
             ([{"symbol": "f_c", "definition": "strength"}], [("f_c", "strength")]),
             ({"symbol": "E", "definition": "modulus"}, [("E", "modulus")]),
             ({"E": "modulus", "nu": "Poisson"}, [("E", "modulus"), ("nu", "Poisson")]),
-            ([("E", "modulus"), ["G"], "h", None, {"symbol": None}], [("E", "modulus"), ("G", ""), ("h", "")]),
+            (
+                [("E", "modulus"), ["G"], "h", None, {"symbol": None}],
+                [("E", "modulus"), ("G", ""), ("h", "")],
+            ),
         ],
     )
     def test_notation_entries(self, value, expected):
@@ -132,14 +143,30 @@ class TestGuidelineInterpretation:
 
     @pytest.mark.parametrize(
         "value,expected",
-        [("single", 1.0), ("1.5", 1.5), (1.5, 1.5), ("one and a half", 1.5), ("double", 2.0), (2, 2.0), (None, 2.0), ("weird", 2.0)],
+        [
+            ("single", 1.0),
+            ("1.5", 1.5),
+            (1.5, 1.5),
+            ("one and a half", 1.5),
+            ("double", 2.0),
+            (2, 2.0),
+            (None, 2.0),
+            ("weird", 2.0),
+        ],
     )
     def test_line_spacing_value(self, value, expected):
         assert _line_spacing_value(value) == expected
 
     @pytest.mark.parametrize(
         "value,expected",
-        [("1 inch all sides", 1.0), ("25 mm all sides", 25 / 25.4), ("2 cm", 2 / 2.54), ("0.75 in", 0.75), ("standard", 1.0), (None, 1.0)],
+        [
+            ("1 inch all sides", 1.0),
+            ("25 mm all sides", 25 / 25.4),
+            ("2 cm", 2 / 2.54),
+            ("0.75 in", 0.75),
+            ("standard", 1.0),
+            (None, 1.0),
+        ],
     )
     def test_parse_margin(self, value, expected):
         assert _parse_margin(value) == pytest.approx(expected)
@@ -174,7 +201,9 @@ class TestGuidelineInterpretation:
         assert n.label(1, "Appendix A") == "Appendix A"
         assert n.label(2, "Derivation") == "Derivation"
         assert _HeadingNumberer(False).label(1, "Intro") == "Intro"
-        manual = _HeadingNumberer(True, [{"heading": "Intro", "subsections": [{"heading": "2.1 X"}]}])
+        manual = _HeadingNumberer(
+            True, [{"heading": "Intro", "subsections": [{"heading": "2.1 X"}]}]
+        )
         assert manual.label(1, "Intro") == "Intro"
 
     def test_heading_number_helpers(self):
@@ -188,11 +217,59 @@ class TestGuidelineInterpretation:
     @pytest.mark.parametrize(
         "key,order,front",
         [
-            ("asce_jse", ["data_availability", "acknowledgments", "notation", "references", "tables", "figures"], False),
-            ("aci_sj", ["acknowledgments", "data_availability", "references", "notation", "tables", "figures"], False),
-            ("jbe", ["notation", "data_availability", "acknowledgments", "references", "figures", "tables"], False),
-            ("eng_structures", ["acknowledgments", "data_availability", "references", "tables", "figures"], True),
-            ("buildings_mdpi", ["tables", "figures", "notation", "data_availability", "acknowledgments", "references"], False),
+            (
+                "asce_jse",
+                [
+                    "data_availability",
+                    "acknowledgments",
+                    "notation",
+                    "references",
+                    "tables",
+                    "figures",
+                ],
+                False,
+            ),
+            (
+                "aci_sj",
+                [
+                    "acknowledgments",
+                    "data_availability",
+                    "references",
+                    "notation",
+                    "tables",
+                    "figures",
+                ],
+                False,
+            ),
+            (
+                "jbe",
+                [
+                    "notation",
+                    "data_availability",
+                    "acknowledgments",
+                    "references",
+                    "figures",
+                    "tables",
+                ],
+                False,
+            ),
+            (
+                "eng_structures",
+                ["acknowledgments", "data_availability", "references", "tables", "figures"],
+                True,
+            ),
+            (
+                "buildings_mdpi",
+                [
+                    "tables",
+                    "figures",
+                    "notation",
+                    "data_availability",
+                    "acknowledgments",
+                    "references",
+                ],
+                False,
+            ),
         ],
     )
     def test_document_layout(self, key, order, front):

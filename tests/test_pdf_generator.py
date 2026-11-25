@@ -1,6 +1,16 @@
 import os
 
+import pytest
+
+from utils import pdf_generator
 from utils.pdf_generator import generate_pdf
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (pdf_generator,):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
 
 
 def _make_paper():

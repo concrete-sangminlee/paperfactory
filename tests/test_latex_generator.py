@@ -1,6 +1,16 @@
 import os
 
+import pytest
+
+from utils import latex_generator
 from utils.latex_generator import _escape_latex, _get_document_class, generate_latex
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (latex_generator,):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
 
 
 class TestGetDocumentClass:

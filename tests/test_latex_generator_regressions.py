@@ -10,6 +10,7 @@ import re
 
 import pytest
 
+from utils import latex_generator, word_generator
 from utils.guidelines import UnknownJournalError, available_journal_keys
 from utils.latex_generator import (
     _bibtex_authors,
@@ -19,6 +20,14 @@ from utils.latex_generator import (
     _strip_caption_label,
     generate_latex,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (latex_generator, word_generator):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
+
 
 BASE = {
     "title": "Regression Paper",
@@ -420,6 +429,12 @@ def test_full_paper_is_structurally_valid_for_every_journal(tmp_path, journal_ke
     }
     tex_path, bib_path, tex, bib = _gen(tmp_path, content, journal=journal_key, figures=["f.png"])
     assert tex_path.endswith(f"_{journal_key}.tex") and bib_path.endswith(f"_{journal_key}.bib")
-    assert tex.startswith(f"\\documentclass[") and tex.rstrip().endswith(r"\end{document}")
+    assert tex.startswith("\\documentclass[") and tex.rstrip().endswith(r"\end{document}")
     assert_tex_balanced(tex)
     assert_bib_balanced(bib)
+
+
+def test_default_output_dir_is_module_constant(tmp_path):
+    # Patching latex_generator.DEFAULT_PAPERS_DIR must redirect the output.
+    tex, bib = generate_latex(BASE, "jweia")
+    assert os.path.dirname(tex) == os.path.dirname(bib) == str(tmp_path / "default_papers")

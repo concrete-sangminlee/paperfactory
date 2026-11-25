@@ -9,8 +9,17 @@ import pdfplumber
 import pytest
 from PIL import Image
 
+from utils import pdf_generator, word_generator
 from utils.guidelines import UnknownJournalError, available_journal_keys
 from utils.pdf_generator import _build_styles, _needs_unicode_font, _safe_xml, generate_pdf
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_outputs(tmp_path, monkeypatch):
+    """Redirect the default output directory so no test can write into outputs/."""
+    for module in (pdf_generator, word_generator):
+        monkeypatch.setattr(module, "DEFAULT_PAPERS_DIR", str(tmp_path / "default_papers"))
+
 
 BASE = {
     "title": "Regression Paper",
@@ -216,3 +225,8 @@ def test_full_paper_for_every_journal(tmp_path, journal_key):
     text = _text(path)
     assert path.endswith(f"_{journal_key}.pdf")
     assert "Regression Paper" in text and "Results." in text and "Table 1. T." in text
+
+
+def test_default_output_dir_is_module_constant(tmp_path):
+    path = generate_pdf(BASE, "jweia")
+    assert os.path.dirname(path) == str(tmp_path / "default_papers")
