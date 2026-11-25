@@ -1129,6 +1129,10 @@ paper_content = {
         "Fig. 7. Residual analysis for the Random Forest model.",
         "Fig. 8. Distribution comparison of measured and RF-predicted peak Cp values.",
     ],
+    "conflict_of_interest": (
+        "The authors declare that they have no known competing financial interests or personal "
+        "relationships that could have appeared to influence the work reported in this paper."
+    ),
     "data_availability": (
         "The wind pressure data used in this study were generated synthetically to demonstrate "
         "the proposed framework methodology. The TPU aerodynamic database is publicly available "
