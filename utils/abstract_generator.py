@@ -6,12 +6,63 @@ following the standard pattern: purpose, methods, results, conclusions.
 
 import re
 
+from utils.paper_analytics import split_sentences
+
+# Section headings (upper-cased substrings) searched for each abstract part, in
+# order of preference.  The fallbacks cover the headings used by the
+# experimental and numerical templates in ``utils.template_system``.
+_PURPOSE_HEADINGS = ("INTRODUCTION",)
+_METHOD_HEADINGS = (
+    "METHOD",
+    "EXPERIMENTAL PROGRAM",
+    "EXPERIMENTAL SETUP",
+    "EXPERIMENTAL PROCEDURE",
+    "NUMERICAL MODEL",
+    "FINITE ELEMENT MODEL",
+    "MATERIALS AND",
+)
+_RESULT_HEADINGS = ("RESULT", "PARAMETRIC STUDY", "DISCUSSION")
+_CONCLUSION_HEADINGS = ("CONCLUSION",)
+
+# Word-boundary patterns, so that e.g. "claim" does not match "aim" and
+# "foundation" does not match "found".
+_PURPOSE_STRONG_RE = re.compile(
+    r"\b(?:this|the current)\s+(?:study|paper|work|research|article)\b"
+    r"|\bthe present\b|\bwe\s+(?:propose|present|develop|investigate)\b",
+    re.IGNORECASE,
+)
+_PURPOSE_WEAK_RE = re.compile(
+    r"\b(?:objectives?|aims?|aimed|purpose|address(?:es)?)\b", re.IGNORECASE
+)
+_METHOD_SENTENCE_RE = re.compile(
+    r"\b(?:model|method|approach|framework|algorithm|trained|compared|cross-validation)",
+    re.IGNORECASE,
+)
+_RESULT_NUMBER_RE = re.compile(r"\d+\.\d+|\d+(?:\.\d+)?\s*(?:%|percent\b)", re.IGNORECASE)
+
+_HAS_PURPOSE_RE = re.compile(
+    r"\b(?:this study|this paper|this work|we present|we propose)\b", re.IGNORECASE
+)
+_HAS_METHOD_RE = re.compile(
+    r"\b(?:method|approach|model|framework|technique|algorithm)", re.IGNORECASE
+)
+_HAS_RESULTS_RE = re.compile(
+    r"\b(?:result|found\b|achieved|show|demonstrate|accuracy|r-squared|rmse\b|mae\b|r2\b"
+    r"|outperform)|r²",
+    re.IGNORECASE,
+)
+_HAS_CONCLUSION_RE = re.compile(
+    r"\b(?:conclud|significant|effective|practical|implication|potential)", re.IGNORECASE
+)
+
 
 def generate_abstract(paper_content: dict, max_words: int = 250) -> str:
     """Generate an abstract from paper body sections.
 
-    Extracts the first meaningful sentence from each major section
-    and combines them into a structured abstract.
+    Extracts the first meaningful sentence(s) from each major section
+    (purpose, methods, results, conclusions) and combines them into a
+    structured abstract.  Only whole sentences are used, so the abstract never
+    ends mid-sentence, and it never exceeds ``max_words`` words.
 
     Parameters
     ----------
@@ -25,64 +76,27 @@ def generate_abstract(paper_content: dict, max_words: int = 250) -> str:
     str
         Generated abstract text.
     """
-    sections = paper_content.get("sections", [])
-    parts = []
-
-    # Purpose (from Introduction)
-    intro = _find_section(sections, "INTRODUCTION")
-    if intro:
-        purpose = _extract_purpose(intro)
-        if purpose:
-            parts.append(purpose)
-
-    # Methods (from Methodology)
-    method = _find_section(sections, "METHOD")
-    if method:
-        methods = _extract_methods(method)
-        if methods:
-            parts.append(methods)
-
-    # Results (from Results)
-    results = _find_section(sections, "RESULT")
-    if results:
-        findings = _extract_results(results)
-        if findings:
-            parts.append(findings)
-
-    # Conclusions
-    conclusion = _find_section(sections, "CONCLUSION")
-    if conclusion:
-        conc = _extract_conclusions(conclusion)
-        if conc:
-            parts.append(conc)
-
-    abstract = " ".join(parts)
-
-    # Trim to max_words
-    words = abstract.split()
-    if len(words) > max_words:
-        abstract = " ".join(words[:max_words])
-        # End at last complete sentence
-        last_period = abstract.rfind(".")
-        if last_period > len(abstract) * 0.5:
-            abstract = abstract[: last_period + 1]
-
-    return abstract
+    return _fit_to_word_limit(_abstract_sentences(paper_content), max_words)
 
 
 def improve_abstract(abstract: str, paper_content: dict, max_words: int = 250) -> dict:
     """Analyze and suggest improvements for an existing abstract.
 
-    Returns dict with 'score', 'suggestions', and 'improved' (if possible).
+    Returns dict with 'score', 'word_count', 'suggestions', the 'has_*' flags
+    and 'improved': a revised abstract (missing components added from the
+    paper body, trimmed to ``max_words`` at sentence boundaries), or ``None``
+    when no automatic improvement is possible.
     """
+    abstract = abstract or ""
     suggestions = []
     words = abstract.split()
-    sentences = [s.strip() for s in abstract.split(".") if s.strip()]
+    sentences = split_sentences(abstract)
 
-    # Length check
-    if len(words) < 100:
+    # Length check (the lower target scales down for journals with short limits)
+    target_min = min(150, round(max_words * 0.6))
+    if len(words) < min(100, target_min):
         suggestions.append(
-            f"Abstract is short ({len(words)} words). Aim for 150-{max_words} words."
+            f"Abstract is short ({len(words)} words). Aim for {target_min}-{max_words} words."
         )
     elif len(words) > max_words:
         suggestions.append(
@@ -90,31 +104,10 @@ def improve_abstract(abstract: str, paper_content: dict, max_words: int = 250) -
         )
 
     # Structure check
-    has_purpose = any(
-        w in abstract.lower()
-        for w in ["this study", "this paper", "this work", "we present", "we propose"]
-    )
-    has_method = any(
-        w in abstract.lower()
-        for w in ["method", "approach", "model", "framework", "technique", "algorithm"]
-    )
-    has_results = any(
-        w in abstract.lower()
-        for w in [
-            "result",
-            "found",
-            "achieved",
-            "show",
-            "demonstrate",
-            "accuracy",
-            "r-squared",
-            "rmse",
-        ]
-    )
-    has_conclusion = any(
-        w in abstract.lower()
-        for w in ["conclud", "significant", "effective", "practical", "implication", "potential"]
-    )
+    has_purpose = bool(_HAS_PURPOSE_RE.search(abstract))
+    has_method = bool(_HAS_METHOD_RE.search(abstract))
+    has_results = bool(_HAS_RESULTS_RE.search(abstract))
+    has_conclusion = bool(_HAS_CONCLUSION_RE.search(abstract))
 
     if not has_purpose:
         suggestions.append(
@@ -139,6 +132,21 @@ def improve_abstract(abstract: str, paper_content: dict, max_words: int = 250) -
     score = 100 - len(suggestions) * 15
     score = max(score, 0)
 
+    # Build an improved version: add missing parts from the body, then trim.
+    sections = (paper_content or {}).get("sections") or []
+    revised = list(sentences)
+    if not has_purpose:
+        revised = _split(_extract_part(sections, _PURPOSE_HEADINGS, _extract_purpose)) + revised
+    if not has_method:
+        revised += _split(_extract_part(sections, _METHOD_HEADINGS, _extract_methods))
+    if not has_results:
+        revised += _split(_extract_part(sections, _RESULT_HEADINGS, _extract_results))
+    if not has_conclusion:
+        revised += _split(_extract_part(sections, _CONCLUSION_HEADINGS, _extract_conclusions))
+    improved = _fit_to_word_limit(_dedupe(revised), max_words)
+    if not improved or improved == " ".join(sentences):
+        improved = None
+
     return {
         "score": score,
         "word_count": len(words),
@@ -147,45 +155,97 @@ def improve_abstract(abstract: str, paper_content: dict, max_words: int = 250) -
         "has_method": has_method,
         "has_results": has_results,
         "has_conclusion": has_conclusion,
+        "improved": improved,
     }
 
 
-def _find_section(sections: list, keyword: str):
-    for s in sections:
-        if keyword in s.get("heading", "").upper():
-            return s
+def _abstract_sentences(paper_content: dict) -> list:
+    """Return the ordered, de-duplicated candidate sentences for an abstract."""
+    sections = (paper_content or {}).get("sections") or []
+    sentences = []
+    for headings, extractor in (
+        (_PURPOSE_HEADINGS, _extract_purpose),
+        (_METHOD_HEADINGS, _extract_methods),
+        (_RESULT_HEADINGS, _extract_results),
+        (_CONCLUSION_HEADINGS, _extract_conclusions),
+    ):
+        sentences += _split(_extract_part(sections, headings, extractor))
+    return _dedupe(sentences)
+
+
+def _extract_part(sections: list, headings: tuple, extractor) -> str:
+    section = _find_section(sections, headings)
+    return extractor(section) if section else ""
+
+
+def _fit_to_word_limit(sentences: list, max_words: int) -> str:
+    """Join whole sentences, in order, while the total stays within ``max_words``.
+
+    Sentences that would overflow the limit are skipped (a later, shorter one
+    may still fit).  If not even one sentence fits, the first is truncated to
+    ``max_words`` words and marked with an ellipsis.
+    """
+    if max_words is None or max_words <= 0 or not sentences:
+        return ""
+    kept, count = [], 0
+    for sentence in sentences:
+        n = len(sentence.split())
+        if count + n <= max_words:
+            kept.append(sentence)
+            count += n
+    if kept:
+        return " ".join(kept)
+    head = sentences[0].split()[:max_words]
+    return " ".join(head).rstrip(".,;:!?") + "..."
+
+
+def _split(text: str) -> list:
+    return split_sentences(text) if text else []
+
+
+def _dedupe(sentences: list) -> list:
+    seen, unique = set(), []
+    for s in sentences:
+        if s not in seen:
+            seen.add(s)
+            unique.append(s)
+    return unique
+
+
+def _find_section(sections: list, keyword):
+    """Return the first section whose heading contains ``keyword``.
+
+    ``keyword`` may be a string or a tuple of strings tried in order of
+    preference (all sections are searched for the first keyword before the
+    next keyword is tried).
+    """
+    keywords = (keyword,) if isinstance(keyword, str) else tuple(keyword)
+    valid = [s for s in sections or [] if isinstance(s, dict)]
+    for kw in keywords:
+        for s in valid:
+            if kw in str(s.get("heading") or "").upper():
+                return s
     return None
 
 
 def _get_text(section: dict) -> str:
-    text = section.get("content", "")
-    for sub in section.get("subsections", []):
-        text += " " + sub.get("content", "")
-    return text
+    parts = [section.get("content") or ""]
+    for sub in section.get("subsections") or []:
+        if isinstance(sub, dict):
+            parts.append(_get_text(sub))
+    return "\n\n".join(p for p in parts if p)
 
 
 def _extract_purpose(section: dict) -> str:
     """Extract purpose/objective from introduction."""
-    text = _get_text(section)
-    sentences = _get_sentences(text)
+    sentences = _get_sentences(_get_text(section))
 
-    # Look for objective sentences
-    for s in sentences:
-        s_lower = s.lower()
-        if any(
-            phrase in s_lower
-            for phrase in [
-                "this study",
-                "this paper",
-                "this work",
-                "the present",
-                "objective",
-                "aim",
-                "purpose",
-                "addresses",
-            ]
-        ):
-            return s
+    # Look for explicit objective statements first ("This study..."), then
+    # weaker cues ("The objective...", "...aims to...").
+    for pattern in (_PURPOSE_STRONG_RE, _PURPOSE_WEAK_RE):
+        for s in sentences:
+            if pattern.search(s):
+                return s
     # Fallback: last sentence of intro (often states objectives)
     if sentences:
         return sentences[-1]
@@ -194,25 +254,11 @@ def _extract_purpose(section: dict) -> str:
 
 def _extract_methods(section: dict) -> str:
     """Extract key methodology from methods section."""
-    text = _get_text(section)
-    sentences = _get_sentences(text)
+    sentences = _get_sentences(_get_text(section))
 
     method_sentences = []
     for s in sentences:
-        s_lower = s.lower()
-        if any(
-            w in s_lower
-            for w in [
-                "model",
-                "method",
-                "approach",
-                "framework",
-                "algorithm",
-                "trained",
-                "compared",
-                "cross-validation",
-            ]
-        ):
+        if _METHOD_SENTENCE_RE.search(s):
             method_sentences.append(s)
             if len(method_sentences) >= 2:
                 break
@@ -221,13 +267,12 @@ def _extract_methods(section: dict) -> str:
 
 def _extract_results(section: dict) -> str:
     """Extract key results."""
-    text = _get_text(section)
-    sentences = _get_sentences(text)
+    sentences = _get_sentences(_get_text(section))
 
     result_sentences = []
     for s in sentences:
-        # Prioritize sentences with numbers
-        if re.search(r"\d+\.\d+", s):
+        # Prioritize sentences with numbers (decimals or percentages)
+        if _RESULT_NUMBER_RE.search(s):
             result_sentences.append(s)
             if len(result_sentences) >= 2:
                 break
@@ -236,14 +281,12 @@ def _extract_results(section: dict) -> str:
 
 def _extract_conclusions(section: dict) -> str:
     """Extract key conclusions."""
-    text = _get_text(section)
-    sentences = _get_sentences(text)
+    sentences = _get_sentences(_get_text(section))
     if sentences:
         return sentences[0]
     return ""
 
 
 def _get_sentences(text: str) -> list:
-    """Split text into clean sentences."""
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    return [s.strip() for s in sentences if len(s.strip()) > 20]
+    """Split text into clean sentences (abbreviation/decimal aware)."""
+    return [s for s in split_sentences(text) if len(s) > 20]
