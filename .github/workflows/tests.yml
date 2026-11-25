@@ -81,6 +81,30 @@ jobs:
           name: coverage-xml
           path: coverage.xml
 
+  latex:
+    name: LaTeX export compiles (TeX Live)
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+      PAPERFACTORY_REQUIRE_TEX: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+            texlive-publishers texlive-lang-korean texlive-fonts-recommended cm-super
+      - name: Install package
+        run: pip install -e ".[dev]"
+      - name: Compile LaTeX export for every journal
+        run: python -m pytest tests/test_latex_compile.py -v
+
   build:
     name: Build distribution
     runs-on: ubuntu-latest
