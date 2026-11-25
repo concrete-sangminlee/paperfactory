@@ -319,7 +319,11 @@ def list_runs(runs_dir: str = None) -> list[dict]:
                 "progress": p.progress,
                 "updated_at": p.state.updated_at,
                 "path": path,
+                "_mtime": os.path.getmtime(path),
             }
         )
-    runs.sort(key=lambda r: r["updated_at"], reverse=True)
+    # Timestamps can tie (coarse clocks on Windows); break ties the same way find_state does.
+    runs.sort(key=lambda r: (r["updated_at"], r["_mtime"], r["run_id"]), reverse=True)
+    for r in runs:
+        del r["_mtime"]
     return runs

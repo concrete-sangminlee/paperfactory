@@ -187,6 +187,26 @@ class TestPipelineRobustness:
         assert [r["topic"] for r in runs] == ["B", "A"]
         assert runs[0]["progress"] == pytest.approx(0.2)
 
+    def test_list_runs_breaks_timestamp_ties_like_find_state(self, monkeypatch):
+        from pipeline import orchestrator
+        from pipeline.orchestrator import find_state, list_runs
+
+        class FrozenClock(orchestrator.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return orchestrator.datetime(2026, 1, 1, 12, 0, 0)
+
+        monkeypatch.setattr(orchestrator, "datetime", FrozenClock)
+        a = PaperPipeline("A", "jweia")
+        a.state.save()
+        b = PaperPipeline("B", "jweia")
+        b.state.save()
+        os.utime(a.state.state_path, (0, 0))
+        assert a.state.updated_at == b.state.updated_at
+        assert [r["topic"] for r in list_runs()] == ["B", "A"]
+        assert find_state() == b.state.state_path
+        assert "_mtime" not in list_runs()[0]
+
     def test_status_shows_progress_and_notes(self):
         p = PaperPipeline("Topic", "jweia")
         p.complete_step(references=["r"], note="Found 18 papers")
