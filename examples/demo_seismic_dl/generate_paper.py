@@ -11,6 +11,7 @@ import sys
 import matplotlib
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -237,6 +238,313 @@ plt.close()
 print(f"  Total figures: {len(figure_paths)}")
 
 # ── Paper Assembly ───────────────────────────────────────────────────────────
+# ── Data-driven findings ─────────────────────────────────────────────────────
+# Every comparative statement in the manuscript is derived from these values, so
+# the narrative stays consistent with the computed results (which can shift
+# slightly across scikit-learn versions).
+ABBR = {"Random Forest": "RF", "Gradient Boosting": "GBR", "Deep Neural Network": "DNN"}
+TREE_MODELS = {"Random Forest", "Gradient Boosting"}
+FEATURE_GROUPS = {
+    "peak": ["PGA", "PGV", "PGD"],
+    "spectral": ["Sa_02", "Sa_05", "Sa_10", "Sd_02", "Sd_05"],
+    "drift": ["max_drift_1F", "max_drift_2F", "max_drift_3F", "residual_drift"],
+    "energy": ["energy_input", "Arias_intensity", "CAV"],
+    "accel": ["max_accel_roof"],
+    "structural": ["n_stories", "period_T1", "base_shear_coeff", "axial_load_ratio"],
+}
+FEATURE_LABELS = {
+    "max_drift_1F": "maximum inter-story drift at floor 1 (max_drift_1F)",
+    "max_drift_2F": "maximum inter-story drift at floor 2 (max_drift_2F)",
+    "max_drift_3F": "maximum inter-story drift at floor 3 (max_drift_3F)",
+    "residual_drift": "residual drift",
+    "max_accel_roof": "peak roof acceleration (max_accel_roof)",
+    "energy_input": "input energy",
+    "Arias_intensity": "Arias intensity",
+    "CAV": "cumulative absolute velocity (CAV)",
+    "period_T1": "fundamental period (T1)",
+    "base_shear_coeff": "base shear coefficient",
+    "n_stories": "number of stories",
+    "axial_load_ratio": "axial load ratio",
+    "Sa_02": "Sa(0.2s)",
+    "Sa_05": "Sa(0.5s)",
+    "Sa_10": "Sa(1.0s)",
+    "Sd_02": "Sd(0.2s)",
+    "Sd_05": "Sd(0.5s)",
+}
+
+
+def fmt_list(items):
+    items = list(items)
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + ", and " + items[-1]
+
+
+def ordinal(n):
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def label(feature):
+    return FEATURE_LABELS.get(feature, feature)
+
+
+ranking = sorted(models, key=lambda n: overall[n]["acc"], reverse=True)
+best, second, third = ranking
+best_ab = ABBR[best]
+acc_min = min(o["acc"] for o in overall.values())
+acc_max = max(o["acc"] for o in overall.values())
+gap_pp = (overall[best]["acc"] - overall[second]["acc"]) * 100
+best_tree = max(TREE_MODELS, key=lambda n: overall[n]["acc"])
+cv_std = {n: float(np.std(cv_results[n]["acc"])) for n in models}
+cv_cov = {n: cv_std[n] / float(np.mean(cv_results[n]["acc"])) for n in models}
+by_stability = sorted(models, key=lambda n: cv_std[n])
+
+# Statistical significance of the model ranking
+n_total = len(y)
+acc_ci = {
+    n: 1.96 * float(np.sqrt(overall[n]["acc"] * (1 - overall[n]["acc"]) / n_total)) for n in models
+}
+correct_best = y_pred_all[best] == y
+correct_second = y_pred_all[second] == y
+b_count = int(np.sum(correct_best & ~correct_second))
+c_count = int(np.sum(~correct_best & correct_second))
+mcnemar_chi2 = (abs(b_count - c_count) - 1) ** 2 / (b_count + c_count) if b_count + c_count else 0.0
+mcnemar_p = float(stats.chi2.sf(mcnemar_chi2, 1))
+paired_t_p = float(stats.ttest_rel(cv_results[best]["acc"], cv_results[second]["acc"]).pvalue)
+significant = mcnemar_p < 0.05
+ci_items = [f"{ABBR[n]} {overall[n]['acc']:.1%} ± {acc_ci[n]:.1%}" for n in ranking]
+significance_paragraph = (
+    "To assess whether the differences between the models are statistically meaningful, 95% confidence "
+    "intervals for the overall accuracy were computed with the normal approximation to the binomial "
+    f"distribution (n = {n_total:,}): "
+    f"{fmt_list(ci_items)}. "
+    f"A McNemar test on the pooled out-of-fold predictions of {best_ab} and {ABBR[second]} "
+    f"({b_count} records classified correctly only by {best_ab}, {c_count} only by {ABBR[second]}) gives "
+    f"chi-squared = {mcnemar_chi2:.2f} (p = {mcnemar_p:.3g}), "
+    + (
+        "so the advantage of the best model is statistically significant at the 5% level. "
+        if significant
+        else "so the difference between the two best models is not statistically significant at the 5% "
+        "level, and both should be regarded as performing equivalently on this dataset. "
+    )
+    + f"A paired t-test on the five fold accuracies gives p = {paired_t_p:.3g}; with only five folds this "
+    "test has limited power and is reported for completeness. Because all three models exceed "
+    f"{int(acc_min * 100)}% accuracy, the practical choice between them can reasonably be guided by "
+    "interpretability, computational cost and robustness to sensor noise rather than by accuracy alone. "
+)
+
+per_class_acc, adjacent_share, gross_rate = {}, {}, {}
+for name in models:
+    cm = confusion_matrix(y, y_pred_all[name])
+    per_class_acc[name] = cm.diagonal() / cm.sum(axis=1)
+    errors = cm.sum() - np.trace(cm)
+    adjacent = sum(cm[i, j] for i in range(4) for j in range(4) if abs(i - j) == 1)
+    adjacent_share[name] = adjacent / errors if errors else 1.0
+    gross_rate[name] = (
+        sum(cm[i, j] for i in range(4) for j in range(4) if abs(i - j) >= 2) / cm.sum()
+    )
+mean_class_acc = np.mean([per_class_acc[n] for n in models], axis=0)
+class_order = [int(i) for i in np.argsort(-mean_class_acc)]
+easiest, hardest = class_order[0], class_order[-1]
+same_hardest = all(int(np.argmin(per_class_acc[n])) == hardest for n in models)
+extremes_easiest = set(class_order[:2]) == {0, 3}
+intermediates_hardest = set(class_order[2:]) == {1, 2}
+intermediate_harder_all = all(
+    np.mean(per_class_acc[n][[1, 2]]) < np.mean(per_class_acc[n][[0, 3]]) for n in models
+)
+
+fi_order = [int(i) for i in np.argsort(-imp)]
+rank_of = {feature_names[i]: r + 1 for r, i in enumerate(fi_order)}
+top5 = [feature_names[i] for i in fi_order[:5]]
+total_imp = float(imp.sum())
+group_share = {
+    g: float(sum(imp[feature_names.index(f)] for f in fs)) / total_imp
+    for g, fs in FEATURE_GROUPS.items()
+}
+group_mean = {
+    g: float(np.mean([imp[feature_names.index(f)] for f in fs])) for g, fs in FEATURE_GROUPS.items()
+}
+drift_share = group_share["drift"]
+energy_beats_peak = group_mean["energy"] > group_mean["peak"]
+accel_derived = FEATURE_GROUPS["peak"] + FEATURE_GROUPS["spectral"] + FEATURE_GROUPS["energy"]
+accel_derived += FEATURE_GROUPS["accel"]
+accel_share = sum(group_share[g] for g in ("peak", "spectral", "energy", "accel"))
+top_accel_feature = min(accel_derived, key=lambda f: rank_of[f])
+top_non_drift = next(
+    feature_names[i] for i in fi_order if feature_names[i] not in FEATURE_GROUPS["drift"]
+)
+long_period_sa_higher = (
+    imp[feature_names.index("Sa_05")] > imp[feature_names.index("Sa_02")]
+    and imp[feature_names.index("Sa_10")] > imp[feature_names.index("Sa_02")]
+)
+spectral_order = sorted(FEATURE_GROUPS["spectral"], key=lambda f: rank_of[f])
+
+print("\n  Data-driven findings:")
+print(
+    f"    ranking: {[ABBR[n] for n in ranking]}  CV std: { {ABBR[n]: round(v, 4) for n, v in cv_std.items()} }"
+)
+print(f"    class order: {[damage_names[i] for i in class_order]}  top-5 features: {top5}")
+print(f"    drift share: {drift_share:.1%}  energy > peak: {energy_beats_peak}")
+
+if best in TREE_MODELS:
+    model_discussion = (
+        f"The superior performance of {best_ab} over DNN is consistent with recent findings in the tabular "
+        "data ML literature, which have shown that well-tuned tree-based ensemble methods frequently "
+        "outperform deep neural networks on structured datasets with moderate sample sizes. Recursive "
+        "partitioning captures feature interactions, and bootstrap aggregation or boosting provides robustness "
+        "to feature scaling and noise, which is advantageous in this 20-feature, 2000-sample setting. It is "
+        "worth noting, however, that the DNN's performance could potentially be improved with larger training "
+        "datasets, more extensive hyperparameter tuning, or regularization techniques such as dropout layers. "
+    )
+    conclusion_model = (
+        "Ensemble tree methods are particularly well-suited for structural damage classification using "
+        "tabular feature sets extracted from sensor data. "
+    )
+else:
+    model_discussion = (
+        f"The DNN's advantage over the best tree-based ensemble ({ABBR[best_tree]}) is modest "
+        f"({(overall[best]['acc'] - overall[best_tree]['acc']) * 100:.1f} percentage points). Well-tuned "
+        "tree-based ensembles frequently match or outperform deep neural networks on tabular datasets of "
+        "moderate size, so this result should not be generalized without further testing. One plausible "
+        "explanation is that the damage states in this dataset depend smoothly and largely monotonically on "
+        "the drift-based features, which favors the continuous decision function of the DNN over the "
+        "axis-aligned splits of tree ensembles. The tree ensembles nevertheless remain attractive for "
+        "deployment because they require less tuning and provide direct feature-importance estimates; given "
+        "the small accuracy gap, the choice between the models should weigh interpretability and "
+        "computational cost alongside accuracy. "
+    )
+    conclusion_model = (
+        f"The margin over the best tree-based ensemble ({ABBR[best_tree]}) is small, so tree ensembles "
+        "remain a competitive and more interpretable alternative for tabular sensor features. "
+    )
+
+if energy_beats_peak:
+    energy_paragraph = (
+        "On average, the energy-based parameters (input energy, Arias intensity, CAV; mean importance "
+        f"{group_mean['energy']:.3f}) rank higher than the peak ground motion measures (PGA, PGV, PGD; "
+        f"{group_mean['peak']:.3f}). This suggests that the cumulative energy content of the ground motion is "
+        "more informative for damage classification than peak amplitude alone, which is consistent with the "
+        "understanding that structural damage is a cumulative process driven by the number and amplitude of "
+        "inelastic deformation cycles rather than a single peak response event. "
+    )
+else:
+    energy_paragraph = (
+        "The peak ground motion measures (PGA, PGV, PGD; mean importance "
+        f"{group_mean['peak']:.3f}) are on average about as informative as, or slightly more informative "
+        f"than, the energy-based parameters (input energy, Arias intensity, CAV; {group_mean['energy']:.3f}). "
+        "This differs from the common expectation that cumulative energy measures capture damage potential "
+        "better than peak amplitudes, and most likely reflects that once the drift response is known, the "
+        "ground motion intensity measures carry largely redundant information; their individual importances "
+        "are all small compared with the drift features. "
+    )
+
+structural_ranks = (rank_of["period_T1"], rank_of["base_shear_coeff"])
+if max(structural_ranks) <= 10:
+    structural_paragraph = (
+        f"The structural characteristics features (fundamental period T1, ranked {ordinal(structural_ranks[0])}, "
+        f"and base shear coefficient, ranked {ordinal(structural_ranks[1])} of 20) show moderate importance, "
+        "indicating that the model captures the dependency of damage vulnerability on building properties. "
+        "Buildings with longer fundamental periods tend to be taller and more flexible, experiencing larger "
+        "drift demands for a given ground motion intensity, whereas buildings with higher base shear "
+        "coefficients have greater lateral strength capacity. "
+    )
+else:
+    structural_paragraph = (
+        f"The structural characteristics features (fundamental period T1, ranked {ordinal(structural_ranks[0])}, "
+        f"and base shear coefficient, ranked {ordinal(structural_ranks[1])} of 20) contribute little once the "
+        "drift response is observed. This is expected: building properties such as period and lateral "
+        "strength influence damage mainly through the drift demand they produce, which the drift features "
+        "already measure directly. "
+    )
+
+if long_period_sa_higher:
+    spectral_paragraph = (
+        "Spectral parameters at different periods show varying importance levels, with Sa(0.5s) and Sa(1.0s) "
+        "ranking higher than Sa(0.2s). This pattern reflects the predominant period range of the RC frame "
+        "structures in the dataset (T1 = 0.3-1.5 s), where the spectral demand at longer periods is more "
+        "directly relevant to the structural response. "
+    )
+else:
+    spectral_paragraph = (
+        "Among the spectral parameters, the importance ranking is "
+        f"{fmt_list(label(f) + ' (' + ordinal(rank_of[f]) + ')' for f in spectral_order)}. The differences are "
+        "small, indicating that no single spectral ordinate dominates once the drift response is included. "
+    )
+
+class_sentence = (
+    "Averaged over the three models, accuracy is highest for the "
+    f"{damage_names[easiest]} damage state ({mean_class_acc[easiest]:.1%}), followed by "
+    f"{fmt_list(f'{damage_names[i]} ({mean_class_acc[i]:.1%})' for i in class_order[1:])}. "
+)
+if extremes_easiest:
+    class_sentence += (
+        "The high accuracy for the extreme states (None and Severe) reflects their distinct feature profiles: "
+        "severely damaged structures exhibit markedly elevated drift ratios, residual deformation, and energy "
+        "dissipation, while undamaged structures are clearly separated from damaged ones in the feature space. "
+    )
+if intermediates_hardest:
+    hardest_sentence = (
+        f"The lower accuracy for the intermediate states, and for {damage_names[hardest]} damage in particular"
+        f"{' across all models' if same_hardest else ''}, indicates that these are the most challenging to "
+        "classify. This is physically intuitive: intermediate damage represents states where structural "
+        "response parameters exceed the elastic limit but remain below the thresholds of the next damage "
+        "state, so their feature distributions overlap with both neighbouring states and create ambiguous "
+        "regions in the feature space. Fig. 5 illustrates this overlap through the inter-story drift "
+        "scatter plot, where DS1 and DS2 points intermingle in the transition region. "
+    )
+else:
+    hardest_sentence = (
+        f"The {damage_names[hardest]} state is the most challenging to classify on average. Its feature "
+        "distribution overlaps with those of the neighbouring damage states, creating ambiguous regions in the "
+        "feature space near the decision boundaries, as illustrated by the drift scatter plot in Fig. 5. "
+    )
+
+adjacent_min = min(adjacent_share.values())
+gross_max = max(gross_rate.values())
+if adjacent_min >= 0.5:
+    error_sentence = (
+        "It is also noteworthy that the misclassification patterns observed in the confusion matrices are "
+        "predominantly between adjacent damage states "
+        + (
+            "(every error of every model) "
+            if adjacent_min >= 1.0
+            else f"(at least {adjacent_min:.0%} of the errors of every model) "
+        )
+        + "rather than between distant states (e.g., None misclassified as Severe). This monotonic error "
+        "pattern is desirable from a safety perspective, as it means that even when the model makes errors, "
+        "the predicted damage state is typically within one level of the true state. "
+        + (
+            "No record was misclassified by two or more damage levels by any of the three models. "
+            if gross_max == 0
+            else "Gross misclassifications by two or more damage levels are rare, with rates of at most "
+            f"{gross_max:.1%} across the three models. "
+        )
+        + "This favorable error structure supports the practical "
+        "deployment of the framework for preliminary safety tagging, where conservative thresholds can be "
+        "applied to the probability outputs to ensure that buildings with any significant probability of "
+        "Severe damage are flagged for immediate evacuation. "
+    )
+else:
+    error_sentence = (
+        "The confusion matrices show that misclassifications are not confined to adjacent damage states "
+        f"(as few as {adjacent_min:.0%} of the errors of one model are between neighbouring states), and "
+        f"gross misclassifications by two or more levels occur at rates of up to {gross_max:.1%}. "
+        "Conservative thresholds on the probability outputs are therefore essential before the framework is "
+        "used for safety tagging, so that buildings with any significant probability of Severe damage are "
+        "flagged for immediate evacuation. "
+    )
+
+highlights = [
+    f"All three ML classifiers exceed {int(acc_min * 100)}% accuracy for four-class damage assessment",
+    f"{best} achieves the highest accuracy ({overall[best]['acc']:.1%}) of the three classifiers",
+    f"Inter-story drift features carry {drift_share:.0%} of the total feature importance",
+    (
+        "Energy-based intensity measures are more informative than peak ground motion values"
+        if energy_beats_peak
+        else "Drift response features dominate all ground motion intensity measures"
+    ),
+    "Framework enables near-real-time post-earthquake building safety evaluation",
+]
+assert all(len(h) <= 85 for h in highlights), [len(h) for h in highlights]
+
 print("\n[Step 5] Assembling paper...")
 
 paper_content = {
@@ -249,22 +557,18 @@ paper_content = {
         "features were extracted from structural response signals, including peak ground motion parameters, "
         "spectral accelerations, inter-story drift ratios, and structural characteristics. The models classify "
         "damage into four states: None, Slight, Moderate, and Severe. Using 5-fold stratified cross-validation "
-        f"on 2,000 synthetic response records, RF achieved the highest classification accuracy "
-        f"({overall['Random Forest']['acc']:.1%}) and weighted F1 score ({overall['Random Forest']['f1']:.4f}). "
-        "Feature importance analysis revealed that inter-story drift ratios and Arias intensity are the most "
-        "discriminative features for damage classification. The proposed framework enables near-real-time damage "
+        f"on 2,000 synthetic response records, {best_ab} achieved the highest classification accuracy "
+        f"({overall[best]['acc']:.1%}) and weighted F1 score ({overall[best]['f1']:.4f}), followed by "
+        f"{ABBR[second]} ({overall[second]['acc']:.1%}) and {ABBR[third]} ({overall[third]['acc']:.1%}). "
+        f"Feature importance analysis revealed that inter-story drift ratios, which account for {drift_share:.0%} "
+        "of the total importance, are the most discriminative features for damage classification. "
+        "The proposed framework enables near-real-time damage "
         "assessment following earthquakes, supporting emergency response decision-making. The results demonstrate "
         "that ML-based approaches can provide accurate, consistent, and rapid structural damage evaluation, "
         "complementing traditional visual inspection methods and advancing automated post-earthquake safety assessment."
     ),
     "keywords": "seismic damage assessment; deep learning; RC frame; classification; inter-story drift; SHM; random forest",
-    "highlights": [
-        "ML classifiers achieve over 97% accuracy for four-class seismic damage assessment",
-        "Random Forest outperforms Gradient Boosting and DNN for tabular response features",
-        "Inter-story drift ratios are the most discriminative features for damage classification",
-        "Energy-based intensity measures outperform peak ground motion parameters",
-        "Framework enables near-real-time post-earthquake building safety evaluation",
-    ],
+    "highlights": highlights,
     "sections": [
         {
             "heading": "INTRODUCTION",
@@ -585,41 +889,35 @@ paper_content = {
                     "heading": "Overall classification performance",
                     "content": (
                         f"Table 1 summarizes the overall classification performance of the three ML models. "
-                        f"RF achieved the highest accuracy ({overall['Random Forest']['acc']:.1%}) and weighted F1 score "
-                        f"({overall['Random Forest']['f1']:.4f}), followed by GBR ({overall['Gradient Boosting']['acc']:.1%} "
-                        f"accuracy) and DNN ({overall['Deep Neural Network']['acc']:.1%} accuracy). Table 2 presents "
-                        "the cross-validation statistics, showing the mean and standard deviation across 5 folds. The "
-                        "low standard deviations for RF and GBR indicate stable prediction performance, while DNN "
-                        "exhibits slightly higher fold-to-fold variability. "
+                        f"{best_ab} achieved the highest accuracy ({overall[best]['acc']:.1%}) and weighted F1 score "
+                        f"({overall[best]['f1']:.4f}), followed by {ABBR[second]} ({overall[second]['acc']:.1%} "
+                        f"accuracy) and {ABBR[third]} ({overall[third]['acc']:.1%} accuracy). Table 2 presents "
+                        "the cross-validation statistics, showing the mean and standard deviation across 5 folds. "
+                        f"{ABBR[by_stability[0]]} shows the smallest fold-to-fold standard deviation "
+                        f"({cv_std[by_stability[0]]:.4f}) and {ABBR[by_stability[-1]]} the largest "
+                        f"({cv_std[by_stability[-1]]:.4f}), so all three models give stable predictions. "
                         "\n\n"
                         "The confusion matrices in Fig. 1 provide detailed insight into the classification patterns of "
                         "each model. All three models achieve high accuracy for the None (DS0) and Severe (DS3) damage "
                         "states, which represent the extremes of the damage spectrum with the most distinct feature "
                         "profiles. However, classification between Slight (DS1) and Moderate (DS2) states shows higher "
-                        "confusion rates across all models. This is physically expected, as the transition between these "
+                        f"confusion rates{' for all three models' if intermediate_harder_all else ' on average'}. "
+                        "This is physically expected, as the transition between these "
                         "adjacent damage states involves gradual changes in structural response parameters (particularly "
                         "drift ratios) rather than sharp thresholds, creating overlapping feature distributions near "
                         "the decision boundary. "
                         "\n\n"
-                        "The superior performance of RF over DNN for this classification task is consistent with recent "
-                        "findings in the tabular data ML literature, which have shown that well-tuned tree-based ensemble "
-                        "methods frequently outperform deep neural networks on structured datasets with moderate sample "
-                        "sizes. The RF's ability to handle feature interactions through recursive partitioning, combined "
-                        "with its inherent robustness to feature scaling and noise through bootstrap aggregation, provides "
-                        "advantages over the DNN in this 20-feature, 2000-sample setting. It is worth noting, however, "
-                        "that the DNN's performance could potentially be improved with larger training datasets, more "
-                        "extensive hyperparameter tuning, or the use of regularization techniques such as dropout layers. "
-                        "The relatively small dataset size (2,000 samples) may limit the DNN's ability to learn the "
-                        "complex nonlinear decision boundaries between adjacent damage states, whereas the RF's ensemble "
-                        "mechanism provides natural regularization through feature bagging and bootstrap aggregation. "
+                        f"{model_discussion}"
                         "\n\n"
-                        "The cross-validation results in Table 2 and Fig. 3 further support the stability of the "
-                        "ensemble methods. The coefficient of variation (CV) of accuracy across folds is less than 1% "
-                        "for both RF and GBR, compared to approximately 2% for DNN. This lower variability suggests "
-                        "that the ensemble methods are less sensitive to the particular training-validation data split, "
-                        "which is desirable for deployment in operational settings where prediction consistency is "
-                        "important for building safety decisions. The box plots in Fig. 3 visually confirm this pattern, "
-                        "with the interquartile ranges for RF and GBR being notably more compact than for DNN. "
+                        "The cross-validation results in Table 2 and Fig. 3 quantify the stability of each model. "
+                        "The coefficient of variation (CV) of accuracy across folds is "
+                        f"{fmt_list(f'{cv_cov[n]:.2%} for {ABBR[n]}' for n in models)}. "
+                        f"{ABBR[by_stability[0]]} is therefore the least sensitive to the particular "
+                        "training-validation split, which is desirable for deployment in operational settings "
+                        "where prediction consistency is important for building safety decisions. The box plots in "
+                        "Fig. 3 visualize the fold-to-fold spread of each model. "
+                        "\n\n"
+                        f"{significance_paragraph}"
                     ),
                 },
                 {
@@ -627,9 +925,9 @@ paper_content = {
                     "content": (
                         "Fig. 2 presents the RF feature importance ranking based on the mean decrease in Gini impurity. "
                         "The analysis reveals a clear hierarchy among feature categories, with structural response "
-                        "parameters dominating the classification. The top five features are: maximum inter-story drift "
-                        "at floor 1 (max_drift_1F), maximum inter-story drift at floor 2 (max_drift_2F), residual drift, "
-                        "maximum inter-story drift at floor 3 (max_drift_3F), and Arias intensity. "
+                        "parameters dominating the classification. The top five features are: "
+                        f"{fmt_list(label(f) for f in top5)}. Together, the four drift features account for "
+                        f"{drift_share:.0%} of the total importance. "
                         "\n\n"
                         "The dominance of inter-story drift features is physically well-justified and aligns with the "
                         "fundamental principles of performance-based earthquake engineering (PBEE). Inter-story drift is "
@@ -639,29 +937,11 @@ paper_content = {
                         "damage functions used to define the four damage states are themselves primarily drift-based, "
                         "creating a natural alignment between the feature importance and the damage state definitions. "
                         "\n\n"
-                        "Among the energy-based parameters, Arias intensity and cumulative absolute velocity (CAV) rank "
-                        "higher than the peak ground motion measures (PGA, PGV, PGD). This suggests that the cumulative "
-                        "energy content of the ground motion is more informative for damage classification than peak "
-                        "amplitude alone, which is consistent with the understanding that structural damage is a "
-                        "cumulative process driven by the number and amplitude of inelastic deformation cycles rather "
-                        "than a single peak response event. "
+                        f"{energy_paragraph}"
                         "\n\n"
-                        "The structural characteristics features (fundamental period T1 and base shear coefficient) show "
-                        "moderate importance, indicating that the model successfully captures the dependency of damage "
-                        "vulnerability on building properties. Buildings with longer fundamental periods tend to be taller "
-                        "and more flexible, experiencing larger drift demands for a given ground motion intensity. "
-                        "Conversely, buildings with higher base shear coefficients have greater lateral strength capacity, "
-                        "providing better resistance against seismic demands. The model's ability to learn these "
-                        "well-established engineering relationships provides confidence in the physical interpretability "
-                        "of the classification decisions. "
+                        f"{structural_paragraph}"
                         "\n\n"
-                        "Spectral parameters at different periods show varying importance levels, with Sa(0.5s) and "
-                        "Sa(1.0s) ranking higher than Sa(0.2s). This pattern reflects the predominant period range of "
-                        "the RC frame structures in the dataset (T1 = 0.3-1.5 s), where the spectral demand at longer "
-                        "periods is more directly relevant to the structural response. The relatively lower importance "
-                        "of Sa(0.2s) suggests that high-frequency ground motion components, while important for rigid "
-                        "structures and non-structural elements, are less informative for the damage classification of "
-                        "flexible RC frame structures. "
+                        f"{spectral_paragraph}"
                         "\n\n"
                         "These feature importance findings have direct implications for SHM sensor deployment strategies. "
                         "If resources allow installation of sensors at only a limited number of locations, the results "
@@ -669,9 +949,9 @@ paper_content = {
                         "displacement sensors, or GPS displacement sensors) over additional accelerometers, as drift-based "
                         "features contribute more to damage discrimination than acceleration-derived intensity measures. "
                         "However, if only accelerometers are available (as is common in many SHM installations due to "
-                        "their lower cost and simpler installation), the energy-based features (Arias intensity, CAV) "
-                        "that can be computed directly from acceleration records still provide substantial discriminative "
-                        "power for damage classification. "
+                        "their lower cost and simpler installation), the features that can be computed directly from "
+                        "acceleration records (peak, spectral and energy-based measures and roof acceleration) still "
+                        f"account for {accel_share:.0%} of the total importance, led by {label(top_accel_feature)}. "
                     ),
                 },
                 {
@@ -686,7 +966,8 @@ paper_content = {
                         "comparative study. Zhang et al. (2020) obtained similar accuracy ranges (87-94%) for real-time "
                         "building damage assessment using response features derived from accelerometer data. "
                         "\n\n"
-                        "The higher accuracy observed in the present study (97-99%) can be attributed to several factors: "
+                        f"The higher accuracy observed in the present study ({acc_min:.1%}-{acc_max:.1%}) can be "
+                        "attributed to several factors: "
                         "(1) the use of a comprehensive 20-feature set that combines ground motion intensity measures, "
                         "spectral parameters, structural response quantities, and energy-based parameters, providing "
                         "richer information than the reduced feature sets used in many prior studies; (2) the inclusion "
@@ -735,21 +1016,9 @@ paper_content = {
                     "heading": "Per-class accuracy and damage state boundaries",
                     "content": (
                         "Fig. 6 presents the per-class classification accuracy for each model across the four damage "
-                        "states. All models achieve the highest accuracy for the Severe damage state (DS3), followed by "
-                        "None (DS0), Moderate (DS2), and Slight (DS1). The consistently high accuracy for Severe damage "
-                        "reflects the distinct feature profile of severely damaged structures, which exhibit significantly "
-                        "elevated drift ratios, residual deformation, and energy dissipation compared to less-damaged "
-                        "structures. Similarly, the high accuracy for None damage reflects the clear separation between "
-                        "undamaged and damaged structures in the feature space. "
+                        f"states. {class_sentence}"
                         "\n\n"
-                        "The lower accuracy for Slight damage (DS1) across all models indicates that this damage state "
-                        "is the most challenging to classify. This is physically intuitive: slight damage represents an "
-                        "intermediate state where structural response parameters exceed the elastic limit but remain "
-                        "below the thresholds associated with moderate damage. The feature distributions for DS1 overlap "
-                        "significantly with both DS0 (structures that responded near the elastic limit but sustained "
-                        "no damage) and DS2 (structures with early-stage structural damage), creating ambiguous regions "
-                        "in the feature space. Fig. 5 illustrates this overlap through the inter-story drift scatter "
-                        "plot, where DS1 and DS2 points intermingle in the transition region. "
+                        f"{hardest_sentence}"
                         "\n\n"
                         "These classification challenges at damage state boundaries are not unique to ML-based methods "
                         "but reflect fundamental limitations in discrete damage state definitions applied to what is "
@@ -771,17 +1040,7 @@ paper_content = {
                         "classification while preserving the judgment and experience of trained engineers for the "
                         "most challenging assessment decisions. "
                         "\n\n"
-                        "It is also noteworthy that the misclassification patterns observed in the confusion matrices "
-                        "are predominantly between adjacent damage states (e.g., Slight misclassified as None or "
-                        "Moderate), rather than between distant states (e.g., None misclassified as Severe). This "
-                        "monotonic error pattern is desirable from a safety perspective, as it means that even when "
-                        "the model makes errors, the predicted damage state is typically within one level of the true "
-                        "state. Gross misclassifications that could lead to dangerous safety decisions (e.g., a Severe "
-                        "building classified as None) are extremely rare across all three models, with rates below 0.5% "
-                        "in all cases. This favorable error structure supports the practical deployment of the framework "
-                        "for preliminary safety tagging, where conservative thresholds can be applied to the probability "
-                        "outputs to ensure that buildings with any significant probability of Severe damage are flagged "
-                        "for immediate evacuation. "
+                        f"{error_sentence}"
                     ),
                 },
                 {
@@ -789,7 +1048,7 @@ paper_content = {
                     "content": (
                         "The results of this study have several practical implications for the deployment of ML-based "
                         "damage classification in structural health monitoring systems. First, the high classification "
-                        "accuracy achieved by the RF model (over 97%) across all damage states suggests that automated "
+                        f"accuracy achieved by the {best_ab} model ({overall[best]['acc']:.1%}) suggests that automated "
                         "damage assessment is feasible with current ML techniques, provided that appropriate response "
                         "features can be extracted from sensor data. The feature importance analysis further indicates "
                         "that inter-story drift ratios are the most critical inputs, which has implications for sensor "
@@ -797,8 +1056,8 @@ paper_content = {
                         "sensors or by double-integrating acceleration records with appropriate filtering, the accuracy "
                         "of drift estimation from accelerometers alone remains a topic of ongoing research. "
                         "\n\n"
-                        "Second, the computational efficiency of the trained RF model is a significant practical "
-                        "advantage. Once trained, the RF classifier can produce a damage state prediction in "
+                        "Second, the computational efficiency of the trained classifiers is a significant practical "
+                        "advantage. Once trained, each of the three models can produce a damage state prediction in "
                         "milliseconds for a single building, making it suitable for real-time operation immediately "
                         "following an earthquake. This contrasts with detailed nonlinear analysis methods that require "
                         "hours of computation time per building, making them impractical for rapid post-earthquake "
@@ -842,25 +1101,26 @@ paper_content = {
                 "damage assessment of reinforced concrete frame structures using acceleration response features. "
                 "The following conclusions are drawn: "
                 "\n\n"
-                f"1. Random Forest achieved the best overall classification performance (accuracy = "
-                f"{overall['Random Forest']['acc']:.1%}, weighted F1 = {overall['Random Forest']['f1']:.4f}), "
-                "outperforming both Gradient Boosting and Deep Neural Network classifiers. Ensemble tree methods "
-                "are particularly well-suited for structural damage classification using tabular feature sets "
-                "extracted from sensor data. "
+                f"1. {best} achieved the best overall classification performance (accuracy = "
+                f"{overall[best]['acc']:.1%}, weighted F1 = {overall[best]['f1']:.4f}), ahead of "
+                f"{second} ({overall[second]['acc']:.1%}) and {third} ({overall[third]['acc']:.1%}). "
+                f"{conclusion_model}"
                 "\n\n"
-                "2. Inter-story drift ratios are the most important features for damage state classification, "
-                "followed by energy-based ground motion intensity measures (Arias intensity, CAV). This finding "
+                "2. Inter-story drift ratios are the most important features for damage state classification "
+                f"({drift_share:.0%} of the total importance); the most important feature outside the drift group "
+                f"is {label(top_non_drift)}. This finding "
                 "is consistent with performance-based earthquake engineering principles and validates the "
                 "physically meaningful nature of the ML-based damage classification. "
                 "\n\n"
-                "3. Classification accuracy varies across damage states, with the Severe state being most "
-                "accurately classified and the Slight state being most challenging. The boundary between Slight "
-                "and Moderate damage presents the greatest classification difficulty due to overlapping feature "
-                "distributions in this transition region. "
+                "3. Classification accuracy varies across damage states, with the "
+                f"{damage_names[easiest]} state classified most accurately on average "
+                f"({mean_class_acc[easiest]:.1%}) and the {damage_names[hardest]} state being most challenging "
+                f"({mean_class_acc[hardest]:.1%}). Errors concentrate at the boundaries between neighbouring "
+                "damage states, where feature distributions overlap. "
                 "\n\n"
                 "4. The proposed framework is suitable for integration with permanent SHM systems in instrumented "
                 "buildings, enabling near-real-time damage assessment following earthquakes. The computational "
-                "efficiency of the trained RF model allows classification within milliseconds, making it viable "
+                "efficiency of the trained classifiers allows classification within milliseconds, making them viable "
                 "for immediate post-earthquake safety evaluation and emergency response coordination. "
                 "\n\n"
                 "Limitations of this study include: (a) synthetic data was used to demonstrate the framework "
@@ -956,6 +1216,10 @@ paper_content = {
         "Fig. 5. Inter-story drift scatter plot colored by damage state.",
         "Fig. 6. Per-class classification accuracy comparison.",
     ],
+    "conflict_of_interest": (
+        "The authors declare that they have no known competing financial interests or personal "
+        "relationships that could have appeared to influence the work reported in this paper."
+    ),
     "data_availability": "Synthetic data used for demonstration. Real earthquake damage records can be obtained from PEER NGA-West2 database.",
 }
 
