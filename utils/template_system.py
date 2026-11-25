@@ -4,7 +4,10 @@ Provides skeleton paper_content dicts with pre-filled section headings,
 suggested content outlines, and recommended figure/table plans.
 """
 
+import copy
 import os
+
+from utils.guidelines import load_guideline, resolve_journal_key
 
 TEMPLATES_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates"
@@ -315,11 +318,21 @@ def list_templates() -> list:
 
 
 def get_template(template_key: str) -> dict:
-    """Get a specific template."""
-    if template_key not in TEMPLATES:
+    """Get a specific template (an independent copy; mutating it is safe).
+
+    Keys are case-insensitive and may use hyphens or spaces ("ML-Comparison").
+    """
+    key = template_key
+    if isinstance(key, str):
+        key = key.strip().lower().replace("-", "_").replace(" ", "_")
+    if key not in TEMPLATES:
         available = ", ".join(TEMPLATES.keys())
         raise KeyError(f"Unknown template '{template_key}'. Available: {available}")
-    return TEMPLATES[template_key]
+    return copy.deepcopy(TEMPLATES[key])
+
+
+def _outline_text(outline: list) -> str:
+    return "[OUTLINE]\n" + "\n".join(f"- {item}" for item in outline) if outline else ""
 
 
 def generate_skeleton(template_key: str, topic: str = "", journal_key: str = "") -> dict:
@@ -327,34 +340,54 @@ def generate_skeleton(template_key: str, topic: str = "", journal_key: str = "")
 
     Returns a paper_content dict with pre-filled section headings and
     outline comments that can be filled in during the pipeline.
+
+    If ``journal_key`` is given it is validated (and normalised, e.g.
+    ``"JWEIA"`` -> ``"jweia"``) through :mod:`utils.guidelines`, and the
+    journal's abstract word limit, keyword count and highlights requirement are
+    used in the placeholders.
+
+    Raises
+    ------
+    KeyError
+        Unknown ``template_key``.
+    utils.guidelines.UnknownJournalError
+        Unknown ``journal_key`` (a ``FileNotFoundError``/``ValueError`` subclass).
     """
     template = get_template(template_key)
+    canonical_key = template_key.strip().lower().replace("-", "_").replace(" ", "_")
+
+    structure = {}
+    if journal_key:
+        journal_key = resolve_journal_key(journal_key)
+        structure = load_guideline(journal_key).get("manuscript_structure", {})
+    word_limit = structure.get("abstract_word_limit") or 250
+    keywords_count = structure.get("keywords_count") or "3-7"
 
     sections = []
     for sec_template in template["sections"]:
-        section = {"heading": sec_template["heading"]}
-
-        outline = sec_template.get("outline", [])
-        if outline:
-            section["content"] = "[OUTLINE]\n" + "\n".join(f"- {item}" for item in outline)
+        section = {
+            "heading": sec_template["heading"],
+            "content": _outline_text(sec_template.get("outline", [])),
+        }
 
         subsections = []
         for sub_template in sec_template.get("subsections", []):
-            sub = {"heading": sub_template["heading"]}
-            sub_outline = sub_template.get("outline", [])
-            if sub_outline:
-                sub["content"] = "[OUTLINE]\n" + "\n".join(f"- {item}" for item in sub_outline)
-            subsections.append(sub)
+            subsections.append(
+                {
+                    "heading": sub_template["heading"],
+                    "content": _outline_text(sub_template.get("outline", [])),
+                }
+            )
 
         if subsections:
             section["subsections"] = subsections
         sections.append(section)
 
-    return {
+    skeleton = {
         "title": f"[FILL] {topic}" if topic else "[FILL TITLE]",
         "authors": "[FILL AUTHORS]",
-        "abstract": "[FILL ABSTRACT — max 250 words]",
-        "keywords": "[FILL KEYWORDS — 3-7 terms separated by semicolons]",
+        "abstract": f"[FILL ABSTRACT — max {word_limit} words]",
+        "keywords": f"[FILL KEYWORDS — {keywords_count} terms separated by semicolons]",
         "sections": sections,
         "tables": [
             {"caption": f"[PLAN] {t}", "headers": [], "rows": []}
@@ -363,6 +396,9 @@ def generate_skeleton(template_key: str, topic: str = "", journal_key: str = "")
         "references": [],
         "figure_captions": [f"[PLAN] {f}" for f in template.get("figures_plan", [])],
         "data_availability": "[FILL]",
-        "_template": template_key,
+        "_template": canonical_key,
         "_journal": journal_key,
     }
+    if structure.get("highlights_required"):
+        skeleton["highlights"] = ["[FILL HIGHLIGHT — 3-5 bullet points, max 85 characters each]"]
+    return skeleton

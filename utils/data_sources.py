@@ -4,6 +4,9 @@ Provides metadata and download helpers for common open databases.
 Actual data download requires network access and may need user authentication.
 """
 
+import copy
+import re
+
 SOURCES = {
     "tpu": {
         "name": "TPU Aerodynamic Database",
@@ -43,7 +46,8 @@ SOURCES = {
         "name": "NIST Aerodynamic Database",
         "organization": "National Institute of Standards and Technology",
         "url": "https://www.nist.gov/el/materials-and-structural-systems-division-73100/nist-aerodynamic-database",
-        "description": "Wind pressure data for low-rise buildings from UWO boundary layer wind tunnel.",
+        "description": "Wind pressure data for low-rise buildings from UWO boundary layer "
+        "wind tunnel.",
         "data_types": ["wind_pressure_coefficients", "time_series"],
         "access": "free",
         "format": "Binary, MATLAB",
@@ -62,7 +66,8 @@ SOURCES = {
     },
     "knet": {
         "name": "K-NET / KiK-net",
-        "organization": "National Research Institute for Earth Science and Disaster Resilience (NIED)",
+        "organization": "National Research Institute for Earth Science and Disaster "
+        "Resilience (NIED)",
         "url": "https://www.kyoshin.bosai.go.jp/",
         "description": "Japanese strong-motion seismograph network. Over 1,700 stations "
         "recording acceleration data from earthquakes across Japan.",
@@ -75,13 +80,59 @@ SOURCES = {
         "name": "COSMOS Virtual Data Center",
         "organization": "Consortium of Organizations for Strong-Motion Observation Systems",
         "url": "https://www.strongmotioncenter.org/vdc/",
-        "description": "Global collection of processed strong-motion records from international networks.",
+        "description": "Global collection of processed strong-motion records from "
+        "international networks.",
         "data_types": ["acceleration_time_series", "response_spectra"],
         "access": "free",
         "format": "COSMOS V1/V2",
         "fields": ["earthquake_engineering"],
     },
 }
+
+
+# Topic keywords per source.  Matching is on whole words (plural "s"/"es"
+# allowed) after folding case and treating "-" / "_" as spaces, so "wind" does
+# not match "window" and "nist" does not match "deterministic".
+_KEYWORDS = {
+    "tpu": ["wind", "pressure", "aerodynamic", "low-rise", "roof", "wind tunnel", "tpu"],
+    "peer_nga": [
+        "earthquake",
+        "seismic",
+        "ground motion",
+        "spectral",
+        "response spectrum",
+        "response spectra",
+        "acceleration",
+        "shake",
+    ],
+    "cesmd": ["instrumented", "building response", "floor acceleration", "structural health"],
+    "nist_aero": ["wind", "pressure", "nist", "low-rise", "aerodynamic"],
+    "designsafe": ["hazard", "wind", "earthquake", "tsunami", "storm", "experimental"],
+    "knet": ["japan", "earthquake", "seismic", "kik-net", "strong motion"],
+    "cosmos": ["strong motion", "earthquake", "global", "acceleration"],
+}
+
+
+def _normalize(text: str) -> str:
+    return " ".join(re.sub(r"[-_/]+", " ", str(text or "").lower()).split())
+
+
+def _keyword_pattern(keyword: str) -> re.Pattern:
+    words = _normalize(keyword).split()
+    body = r"\s+".join(re.escape(w) for w in words)
+    return re.compile(rf"\b{body}(?:e?s)?\b")
+
+
+_KEYWORD_PATTERNS = {
+    key: [(kw, _keyword_pattern(kw)) for kw in kws] for key, kws in _KEYWORDS.items()
+}
+
+
+def _with_key(key: str) -> dict:
+    """Return an independent copy of a source's metadata, including its key."""
+    source = copy.deepcopy(SOURCES[key])
+    source["key"] = key
+    return source
 
 
 def list_sources(field: str = None) -> list:
@@ -95,19 +146,21 @@ def list_sources(field: str = None) -> list:
     Returns
     -------
     list[dict]
-        Source metadata dicts.
+        Source metadata dicts (independent copies, each with its ``key``).
     """
-    if field is None:
-        return list(SOURCES.values())
-    return [s for s in SOURCES.values() if field in s.get("fields", [])]
+    return [
+        _with_key(key)
+        for key, s in SOURCES.items()
+        if field is None or field in s.get("fields", [])
+    ]
 
 
 def get_source(key: str) -> dict:
-    """Get metadata for a specific data source."""
+    """Get metadata for a specific data source (an independent copy)."""
     if key not in SOURCES:
         available = ", ".join(SOURCES.keys())
         raise KeyError(f"Unknown source '{key}'. Available: {available}")
-    return SOURCES[key]
+    return _with_key(key)
 
 
 def suggest_sources(topic: str) -> list:
@@ -121,27 +174,18 @@ def suggest_sources(topic: str) -> list:
     Returns
     -------
     list[dict]
-        Matching sources with relevance scores.
+        Matching sources with relevance scores (number of matched keywords) and
+        the matched keywords, most relevant first.
     """
-    topic_lower = topic.lower()
+    topic_norm = _normalize(topic)
     results = []
 
-    keywords_map = {
-        "tpu": ["wind", "pressure", "aerodynamic", "low-rise", "roof", "wind tunnel", "tpu"],
-        "peer_nga": ["earthquake", "seismic", "ground motion", "spectral", "acceleration", "shake"],
-        "cesmd": ["instrumented", "building response", "floor acceleration", "structural health"],
-        "nist_aero": ["wind", "pressure", "nist", "low-rise", "aerodynamic"],
-        "designsafe": ["hazard", "wind", "earthquake", "tsunami", "storm", "experimental"],
-        "knet": ["japan", "earthquake", "seismic", "kik-net", "strong motion"],
-        "cosmos": ["strong motion", "earthquake", "global", "acceleration"],
-    }
-
-    for key, keywords in keywords_map.items():
-        score = sum(1 for kw in keywords if kw in topic_lower)
-        if score > 0:
-            source = dict(SOURCES[key])
-            source["relevance_score"] = score
-            source["key"] = key
+    for key, patterns in _KEYWORD_PATTERNS.items():
+        matched = [kw for kw, pattern in patterns if pattern.search(topic_norm)]
+        if matched:
+            source = _with_key(key)
+            source["relevance_score"] = len(matched)
+            source["matched_keywords"] = matched
             results.append(source)
 
     results.sort(key=lambda x: x["relevance_score"], reverse=True)
