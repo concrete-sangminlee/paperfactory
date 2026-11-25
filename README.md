@@ -375,7 +375,7 @@ from utils.latex_generator import generate_latex
 
 tex_path, bib_path = generate_latex(paper_content, "eng_structures", figures=["fig1.png"])
 # → outputs/papers/Paper_Title_eng_structures.tex
-# → outputs/papers/Paper_Title.bib
+# → outputs/papers/Paper_Title_eng_structures.bib   (one .bib per journal export)
 ```
 
 Automatically selects document class: `elsarticle` (Elsevier), `ascelike` (ASCE), `article` (others).
