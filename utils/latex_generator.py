@@ -394,7 +394,12 @@ def generate_latex(
     lines.append(r"\usepackage[utf8]{inputenc}")
     if _contains_hangul(_all_text(paper_content)):
         lines.append(r"\usepackage{kotex}")
-    lines.append(r"\usepackage{amsmath,amssymb}")
+    if doc_class == "ascelike":
+        # ascelike (v3) already loads amsmath and newtxmath; amssymb on top of
+        # newtxmath is a fatal "Command \\Bbbk already defined" error.
+        lines.append(r"\usepackage{amsmath}")
+    else:
+        lines.append(r"\usepackage{amsmath,amssymb}")
     lines.append(r"\usepackage{graphicx}")
     lines.append(r"\usepackage{booktabs}")
     if doc_class == "article":

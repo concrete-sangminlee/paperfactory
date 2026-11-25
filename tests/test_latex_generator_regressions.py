@@ -456,3 +456,15 @@ def test_tex_and_bib_names_are_ascii(tmp_path, title, stem):
     assert os.path.basename(tex_path) == f"{stem}.tex"
     assert os.path.basename(bib_path) == f"{stem}.bib"
     assert f"\\bibliography{{{stem}}}" in tex
+
+
+def test_ascelike_does_not_load_amssymb(tmp_path):
+    # ascelike v3 loads newtxmath, which already defines the AMS symbols; loading
+    # amssymb again aborts pdflatex ("Command \\Bbbk already defined"), found by
+    # compiling with TeX Live in CI.
+    _, _, tex, _ = _gen(tmp_path, journal="asce_jse")
+    assert r"\documentclass[Journal]{ascelike}" in tex
+    assert "amssymb" not in tex
+    assert r"\usepackage{amsmath}" in tex
+    _, _, elsevier, _ = _gen(tmp_path / "e", journal="eng_structures")
+    assert r"\usepackage{amsmath,amssymb}" in elsevier
