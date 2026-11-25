@@ -184,16 +184,22 @@ def _count_syllables(word: str) -> int:
     hangul = len(_HANGUL_SYLLABLE_RE.findall(word))
     if hangul:
         return hangul
-    # Fold accents ("naïve" -> "naive") and drop non-letters.
-    word = unicodedata.normalize("NFKD", word.lower())
-    word = "".join(ch for ch in word if "a" <= ch <= "z")
+    # Fold accents ("café" -> "cafe") and drop non-letters; a diaeresis marks a
+    # vowel that starts a new syllable ("naïve" = na-ïve).
+    letters, new_group = [], set()
+    for ch in unicodedata.normalize("NFKD", word.lower()):
+        if ch == "̈" and letters:
+            new_group.add(len(letters) - 1)
+        elif "a" <= ch <= "z":
+            letters.append(ch)
+    word = "".join(letters)
     if len(word) <= 3:
         return 1
     count = 0
     prev_vowel = False
-    for char in word:
+    for i, char in enumerate(word):
         is_vowel = char in _VOWELS
-        if is_vowel and not prev_vowel:
+        if is_vowel and (not prev_vowel or i in new_group):
             count += 1
         prev_vowel = is_vowel
     if count > 1:

@@ -57,3 +57,56 @@ class TestSuggestSources:
         sources = suggest_sources("wind pressure aerodynamic database low-rise roof")
         if len(sources) >= 2:
             assert sources[0]["relevance_score"] >= sources[1]["relevance_score"]
+
+
+class TestSuggestSourcesRegressions:
+    @pytest.mark.parametrize(
+        "topic",
+        [
+            "deterministic analysis of window glass",  # "nist" in deterministic, "wind" in window
+            "throughput of output data",  # "tpu" in output/throughput
+            "brainstorm session about shakedown analysis",  # "storm", "shake"
+            "globally optimal winding layout",  # "global" -> globally, "wind" -> winding
+        ],
+    )
+    def test_no_substring_false_positives(self, topic):
+        assert suggest_sources(topic) == []
+
+    def test_hyphen_and_plural_variants_match(self):
+        keys = {s["key"]: s for s in suggest_sources("strong-motion records of earthquakes")}
+        assert "strong motion" in keys["knet"]["matched_keywords"]
+        assert keys["cosmos"]["relevance_score"] == 2
+        tpu = next(
+            s for s in suggest_sources("low rise buildings under winds") if s["key"] == "tpu"
+        )
+        assert set(tpu["matched_keywords"]) == {"wind", "low-rise"}
+
+    def test_response_spectra(self):
+        assert [s["key"] for s in suggest_sources("response spectra matching")] == ["peer_nga"]
+
+    def test_empty_or_none_topic(self):
+        assert suggest_sources("") == []
+        assert suggest_sources(None) == []
+
+    def test_relevance_score_counts_matched_keywords(self):
+        for s in suggest_sources("wind pressure on low-rise roofs"):
+            assert s["relevance_score"] == len(s["matched_keywords"])
+
+
+class TestRegistryIsolation:
+    def test_get_source_returns_copy(self):
+        get_source("tpu")["fields"].append("LEAK")
+        assert "LEAK" not in get_source("tpu")["fields"]
+
+    def test_list_sources_returns_copies_with_keys(self):
+        sources = list_sources()
+        sources[0]["name"] = "LEAK"
+        sources[0]["data_types"].clear()
+        fresh = list_sources()
+        assert fresh[0]["name"] != "LEAK" and fresh[0]["data_types"]
+        assert all("key" in s for s in fresh)
+        assert get_source(fresh[0]["key"])["name"] == fresh[0]["name"]
+
+    def test_suggest_sources_returns_deep_copies(self):
+        suggest_sources("wind")[0]["data_types"].append("LEAK")
+        assert all("LEAK" not in s["data_types"] for s in list_sources())

@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from utils.revision_tracker import (
     address_comment,
     create_revision,
@@ -58,9 +60,10 @@ class TestCreateRevision:
         rev = create_revision(_make_paper(), _make_comments(), output_dir=str(tmp_path))
         path = os.path.join(str(tmp_path), "revision_record.json")
         assert os.path.exists(path)
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             loaded = json.load(f)
         assert loaded["summary"]["total"] == 4
+        assert loaded == rev  # the saved record is the returned record
 
     def test_empty_comments(self):
         rev = create_revision(_make_paper(), [])
@@ -132,3 +135,76 @@ class TestTrackChanges:
         result = track_changes("hello world", "hello world")
         assert result["added_words"] == 0
         assert result["removed_words"] == 0
+
+
+class TestRevisionRegressions:
+    def test_type_is_case_insensitive(self):
+        comments = [{"comment": "a", "type": "Major"}, {"comment": "b", "type": " MAJOR "}]
+        rev = create_revision(_make_paper(), comments)
+        assert rev["summary"]["major"] == 2
+        assert [c["type"] for c in rev["comments"]] == ["major", "major"]
+
+    def test_none_fields_get_defaults_and_letter_renders(self):
+        comments = [{"comment": None, "type": None, "section": None, "reviewer": None}]
+        rev = create_revision(_make_paper(), comments)
+        entry = rev["comments"][0]
+        assert (entry["reviewer"], entry["section"], entry["type"]) == (
+            "Reviewer",
+            "General",
+            "minor",
+        )
+        assert "[MINOR] (Section: General)" in generate_response_letter(rev)
+
+    def test_unknown_comment_id_raises(self):
+        rev = create_revision(_make_paper(), _make_comments())
+        with pytest.raises(KeyError, match="99"):
+            address_comment(rev, 99, "Response", "Change")
+        assert rev["summary"]["addressed"] == 0
+
+    def test_numeric_string_comment_id(self):
+        rev = create_revision(_make_paper(), _make_comments())
+        rev = address_comment(rev, "2", "Fixed.", "Eq. 3 corrected.")
+        assert rev["comments"][1]["status"] == "addressed"
+
+    def test_multiline_response_is_indented(self):
+        rev = create_revision(_make_paper(), _make_comments()[:1])
+        rev = address_comment(rev, 1, "First line.\nSecond line.", "Added refs.")
+        assert "  First line.\n  Second line." in generate_response_letter(rev)
+
+
+class TestTrackChangesRegressions:
+    def test_repeated_words_are_counted(self):
+        # A set-based diff saw no change when existing words were repeated.
+        result = track_changes("a b c", "a b c a b c")
+        assert (result["added_words"], result["removed_words"], result["net_change"]) == (3, 0, 3)
+
+    def test_removed_duplicates_are_counted(self):
+        result = track_changes("the load the load", "the load")
+        assert (result["added_words"], result["removed_words"], result["net_change"]) == (0, 2, -2)
+
+    def test_replacement(self):
+        result = track_changes("the beam failed in shear", "the beam failed in flexure")
+        assert (result["added_words"], result["removed_words"], result["net_change"]) == (1, 1, 0)
+
+    def test_sections_changed_for_paper_dicts(self):
+        original = {
+            "sections": [
+                {"heading": "INTRODUCTION", "content": "Old intro."},
+                {"heading": "METHODS", "content": "Same text."},
+            ]
+        }
+        revised = {
+            "sections": [
+                {"heading": "INTRODUCTION", "content": "New intro with refs."},
+                {"heading": "METHODS", "content": "Same text."},
+                {"heading": "LIMITATIONS", "content": "Added section."},
+            ]
+        }
+        result = track_changes(original, revised)
+        assert result["sections_changed"] == ["INTRODUCTION", "LIMITATIONS"]
+        assert result["added_words"] > 0
+
+    def test_documented_keys_present(self):
+        result = track_changes("x", "x")
+        assert result["sections_changed"] == []
+        assert result["similarity"] == 1.0
