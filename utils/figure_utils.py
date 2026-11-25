@@ -98,11 +98,43 @@ def get_figsize(size: str = "single") -> tuple[float, float]:
     return _FIGSIZES[size]
 
 
-def save_figure(fig, name: str, output_dir: str = None, fmt: str = "png") -> str:
-    """Save figure with standard settings. Returns the saved file path."""
+def save_figure(
+    fig, name: str, output_dir: str = None, fmt: str = "png", close: bool = True
+) -> str:
+    """Save figure with standard settings (DPI=300, tight bbox, white background).
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure to save.
+    name : str
+        File name stem; may contain sub-directories (created as needed).  An
+        extension matching ``fmt`` is not duplicated ("fig1.png" -> "fig1.png").
+    output_dir : str, optional
+        Output directory (default: ``outputs/figures/``; "" = current directory).
+    fmt : str
+        File format / extension, with or without a leading dot.
+    close : bool
+        Close the figure in pyplot after saving (default True) so that scripts
+        generating many figures do not leak memory.  The Figure object stays
+        usable, e.g. ``fig.savefig(...)`` in another format still works.
+
+    Returns
+    -------
+    str
+        The saved file path.
+    """
     if output_dir is None:
         output_dir = FIGURES_DIR
-    os.makedirs(output_dir, exist_ok=True)
-    path = os.path.join(output_dir, f"{name}.{fmt}")
-    fig.savefig(path, dpi=300, bbox_inches="tight", facecolor="white")
+    fmt = str(fmt).strip().lstrip(".").lower() or "png"
+    filename = name if name.lower().endswith(f".{fmt}") else f"{name}.{fmt}"
+    path = os.path.join(output_dir, filename)
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    try:
+        fig.savefig(path, dpi=300, bbox_inches="tight", facecolor="white", format=fmt)
+    finally:
+        if close:
+            plt.close(fig)
     return path
