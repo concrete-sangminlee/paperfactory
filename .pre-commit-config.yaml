@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.16.9
     hooks:
       - id: ruff
         args: [--fix]
@@ -13,5 +13,16 @@ repos:
       - id: end-of-file-fixer
       - id: check-json
       - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=2000]
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (fast)
+        entry: python -m pytest -q -x
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

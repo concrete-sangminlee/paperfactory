@@ -1,4 +1,11 @@
 import os
+import warnings
+
+import matplotlib
+import pytest
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from utils.equation_utils import (
     _latex_to_readable,
@@ -8,6 +15,13 @@ from utils.equation_utils import (
     render_equation_image,
     save_equation_image,
 )
+from utils.figure_utils import setup_style
+
+
+@pytest.fixture(autouse=True)
+def _isolate_matplotlib_state():
+    with matplotlib.rc_context():
+        yield
 
 
 class TestRenderEquation:
@@ -104,3 +118,118 @@ class TestLatexToReadable:
         assert "×" in _latex_to_readable(r"\times")
         assert "±" in _latex_to_readable(r"\pm")
         assert "≈" in _latex_to_readable(r"\approx")
+
+
+class TestExtractEquationsRegressions:
+    def test_escaped_dollars_are_not_delimiters(self):
+        assert extract_equations(r"The cost rose from \$5 to \$10 per unit.") == []
+
+    def test_escaped_dollar_next_to_real_equation(self):
+        eqs = extract_equations(r"Costs \$3 and the stress $f_c$ is known.")
+        assert [(e["type"], e["latex"]) for e in eqs] == [("inline", "f_c")]
+
+    def test_currency_without_escapes(self):
+        assert extract_equations("It costs $5 and $10 respectively.") == []
+
+    def test_bracket_delimiters(self):
+        eqs = extract_equations(r"Display \[ E = mc^2 \] here and \( x \) inline.")
+        assert [(e["type"], e["latex"]) for e in eqs] == [("display", "E = mc^2"), ("inline", "x")]
+        assert eqs[0]["original"] == r"\[ E = mc^2 \]"
+
+    def test_multiline_display(self):
+        eqs = extract_equations("$$\na = b\n+ c\n$$")
+        assert eqs[0]["latex"] == "a = b\n+ c"
+
+    def test_adjacent_inline(self):
+        eqs = extract_equations("pair $a$,$b$.")
+        assert [e["latex"] for e in eqs] == ["a", "b"]
+
+    def test_inline_positions_and_originals(self):
+        text = "x $$a$$ y $b$"
+        eqs = extract_equations(text)
+        for e in eqs:
+            assert text[e["position"] :].startswith(e["original"])
+
+
+class TestNumberEquationsRegressions:
+    def test_idempotent(self):
+        once, n1 = number_equations("A: $$a=b$$ B: $$c=d$$")
+        twice, n2 = number_equations(once)
+        assert twice == once == "A: $$a=b$$ (1) B: $$c=d$$ (2)"
+        assert n1 == n2 == 2
+
+    def test_renumbers_after_insertion(self):
+        text, _ = number_equations("$$a$$ (1) and $$b$$ (2)")
+        text, _ = number_equations("$$z$$ " + text)
+        assert text == "$$z$$ (1) $$a$$ (2) and $$b$$ (3)"
+
+    def test_bracket_display_keeps_its_delimiters(self):
+        text, count = number_equations(r"See \[ a = b \] now.")
+        assert text == r"See \[a = b\] (1) now."
+        assert count == 1
+
+    def test_year_in_parentheses_is_not_an_equation_number(self):
+        text, _ = number_equations("$$a$$ (2010) showed")
+        assert text == "$$a$$ (1) (2010) showed"
+
+
+class TestEquationsToTextRegressions:
+    def test_escaped_dollars_become_plain(self):
+        assert equations_to_text(r"Costs \$5 and $\alpha$.") == "Costs $5 and α."
+
+    def test_bracket_display(self):
+        assert equations_to_text(r"Eq: \[ \sigma = E \varepsilon \]") == "Eq: \n    σ = E ε\n"
+
+
+class TestLatexToReadableRegressions:
+    @pytest.mark.parametrize(
+        "latex,expected",
+        [
+            (r"a \rightarrow b", "a → b"),  # was "a arrow b" (prefix match of \right)
+            (r"\leftarrow", "←"),
+            (r"x_1, \cdots, x_n", "x_1, ⋯, x_n"),  # was "·s"
+            (r"\sqrt{\frac{a}{b}}", "√((a)/(b))"),  # nested braces
+            (r"\frac{x^{2}}{y}", "(x^2)/(y)"),
+            (r"e^{-t/T}", "e^(-t/T)"),
+            (r"\ddot{u} + 2\xi\omega\dot{u}", "ü + 2ξωu̇"),
+            (r"\varepsilon_{y}", "ε_y"),
+            (r"\sin(\theta)", "sin(θ)"),
+            (r"\sin\theta", "sin θ"),
+            (r"f_{\text{max}}", "f_max"),
+            (r"\mathbf{K}\mathbf{u} = \mathbf{F}", "Ku = F"),
+            (r"\left( \frac{a}{b} \right)", "( (a)/(b) )"),
+            (r"\left\{ x \right\}", "{ x }"),
+            (r"100\%", "100%"),
+            (r"\sqrt[3]{x}", "3√(x)"),
+            (r"\nu \leq 0.5", "ν ≤ 0.5"),
+        ],
+    )
+    def test_conversion(self, latex, expected):
+        assert _latex_to_readable(latex) == expected
+
+
+class TestRenderEquationRegressions:
+    def test_no_figure_leak_on_parse_error(self):
+        before = set(plt.get_fignums())
+        with pytest.raises(ValueError):
+            render_equation_image(r"\frac{a}{")
+        assert set(plt.get_fignums()) == before
+
+    def test_no_layout_warning_after_setup_style(self):
+        setup_style()  # enables constrained layout globally
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            data = render_equation_image("x^2")
+        assert data[:4] == b"\x89PNG"
+
+    def test_delimiters_are_tolerated(self):
+        assert render_equation_image("$x^2$")[:4] == b"\x89PNG"
+        assert render_equation_image(r"\[ a = b \]")[:4] == b"\x89PNG"
+
+    def test_empty_equation_raises(self):
+        with pytest.raises(ValueError, match="empty"):
+            render_equation_image("  ")
+
+    def test_save_creates_directory(self, tmp_path):
+        path = save_equation_image("a+b", "eq", output_dir=str(tmp_path / "new" / "dir"))
+        assert os.path.exists(path)

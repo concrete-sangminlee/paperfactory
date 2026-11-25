@@ -5,18 +5,18 @@
     {
       "name": "abstract_word_count",
       "passed": true,
-      "value": 151,
+      "value": 163,
       "limit": 250,
       "severity": "critical",
-      "message": "Abstract: 151 words (limit: 250)"
+      "message": "Abstract: 163 words (limit: 250)"
     },
     {
       "name": "body_word_count",
       "passed": true,
-      "value": 6016,
+      "value": 6015,
       "limit": 6000,
       "severity": "critical",
-      "message": "Body: 6016 words (min: 6000)"
+      "message": "Body: 6015 words (min: 6000)"
     },
     {
       "name": "required_sections",
@@ -30,6 +30,46 @@
       "missing": [],
       "severity": "critical",
       "message": "Sections: 4 found"
+    },
+    {
+      "name": "journal_sections",
+      "passed": true,
+      "value": {
+        "Title": "field:title",
+        "Author Names and Affiliations": "field:authors",
+        "Abstract": "field:abstract",
+        "Highlights": "field:highlights",
+        "Keywords": "field:keywords",
+        "Introduction": "INTRODUCTION",
+        "Materials and Methods": "METHODOLOGY",
+        "Results": "RESULTS AND DISCUSSION",
+        "Discussion": "RESULTS AND DISCUSSION",
+        "Conclusions": "CONCLUSIONS",
+        "Declaration of Competing Interest": "field:conflict_of_interest",
+        "Data Availability Statement": "field:data_availability",
+        "References": "field:references"
+      },
+      "missing": [],
+      "optional_missing": [
+        "Theory/Background"
+      ],
+      "inferred": {},
+      "front_back_matter": {
+        "Title": true,
+        "Author Names and Affiliations": true,
+        "Abstract": true,
+        "Highlights": true,
+        "Keywords": true,
+        "Nomenclature": false,
+        "Acknowledgements": false,
+        "Declaration of Competing Interest": true,
+        "CRediT Author Statement": false,
+        "Data Availability Statement": true,
+        "Appendices": false,
+        "References": true
+      },
+      "severity": "warning",
+      "message": "Journal structure: 3/3 core body sections"
     },
     {
       "name": "reference_count",
@@ -67,6 +107,7 @@
       "name": "keywords",
       "passed": true,
       "value": 7,
+      "limit": "1-7",
       "severity": "warning",
       "message": "Keywords: 7"
     },
@@ -74,8 +115,11 @@
       "name": "highlights",
       "passed": true,
       "value": 5,
+      "limit": "3-5",
+      "char_limit": 85,
+      "over_char_limit": [],
       "severity": "warning",
-      "message": "Highlights: 5 (required by journal)"
+      "message": "Highlights: 5 (required by journal: 3-5)"
     },
     {
       "name": "title",
@@ -92,5 +136,6 @@
       "message": "Data availability: present"
     }
   ],
-  "summary": "Quality Score: 100/100\nStatus: PASS\nChecks: 11/11 passed"
+  "summary": "Quality Score: 100/100\nStatus: PASS\nChecks: 12/12 passed",
+  "journal": "Engineering Structures"
 }

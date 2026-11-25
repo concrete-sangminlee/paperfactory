@@ -1,5 +1,6 @@
 import pytest
 
+from utils.guidelines import UnknownJournalError, load_guideline
 from utils.template_system import generate_skeleton, get_template, list_templates
 
 
@@ -69,3 +70,51 @@ class TestGenerateSkeleton:
         skeleton = generate_skeleton("ml_comparison")
         assert len(skeleton["tables"]) >= 3
         assert "[PLAN]" in skeleton["tables"][0]["caption"]
+
+
+class TestTemplateRegressions:
+    def test_get_template_returns_independent_copy(self):
+        t = get_template("review")
+        t["figures_plan"].append("LEAK")
+        t["sections"].clear()
+        fresh = get_template("review")
+        assert "LEAK" not in fresh["figures_plan"]
+        assert len(fresh["sections"]) >= 4
+
+    def test_template_key_is_case_insensitive(self):
+        assert generate_skeleton("ML-Comparison")["_template"] == "ml_comparison"
+
+    def test_invalid_journal_key_raises(self):
+        with pytest.raises(UnknownJournalError):
+            generate_skeleton("ml_comparison", journal_key="not_a_journal")
+        # Backwards compatible with callers catching FileNotFoundError
+        with pytest.raises(FileNotFoundError):
+            generate_skeleton("ml_comparison", journal_key="nonexistent")
+
+    def test_journal_key_is_normalized(self):
+        assert generate_skeleton("ml_comparison", journal_key=" JWEIA ")["_journal"] == "jweia"
+
+    @pytest.mark.parametrize("journal_key", ["aci_sj", "asce_jse", "jweia"])
+    def test_abstract_placeholder_uses_journal_limit(self, journal_key):
+        limit = load_guideline(journal_key)["manuscript_structure"]["abstract_word_limit"]
+        skeleton = generate_skeleton("ml_comparison", journal_key=journal_key)
+        assert f"max {limit} words" in skeleton["abstract"]
+
+    def test_highlights_placeholder_follows_journal(self):
+        for key in ("jweia", "aci_sj"):
+            required = load_guideline(key)["manuscript_structure"].get("highlights_required")
+            assert ("highlights" in generate_skeleton("numerical", journal_key=key)) == bool(
+                required
+            )
+
+    def test_without_journal_defaults(self):
+        skeleton = generate_skeleton("experimental")
+        assert skeleton["_journal"] == ""
+        assert "max 250 words" in skeleton["abstract"]
+
+    def test_every_section_has_content_key(self):
+        for template in list_templates():
+            for sec in generate_skeleton(template["key"])["sections"]:
+                assert isinstance(sec["content"], str)
+                for sub in sec.get("subsections", []):
+                    assert sub["content"].startswith("[OUTLINE]")

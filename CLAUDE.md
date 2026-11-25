@@ -41,6 +41,8 @@ AI agent that automatically writes civil engineering research papers: user provi
 | Buildings (MDPI) | `buildings_mdpi` | `guidelines/buildings_mdpi.json` |
 | J. Constructional Steel Research | `steel_comp_struct` | `guidelines/steel_comp_struct.json` |
 
+저널 키는 대소문자를 구분하지 않으며 별칭도 허용된다 (`jcsr` → `steel_comp_struct`, `cbm`, `ccc`, `aic`, `engstruct`, `buildings`, `ksce`). 가이드라인은 **반드시** `utils.guidelines.load_guideline()`으로 읽는다 (JSON 파일을 직접 열지 않는다). 잘못된 키는 `UnknownJournalError`와 함께 가장 가까운 키를 제안한다. 유효한 키 목록: `paperfactory journals`.
+
 ---
 
 ## Pipeline (5 Steps)
@@ -302,7 +304,8 @@ w, h = get_figsize("double")   # 7.0 x 4.5 inches (double column)
 
 fig, ax = plt.subplots(figsize=get_figsize("single"))
 ax.plot(x, y, color=colors[0])
-save_figure(fig, "fig_1_model_comparison")   # saves to outputs/figures/
+save_figure(fig, "fig_1_model_comparison")   # saves to outputs/figures/ and closes fig
+save_figure(fig, "fig_2", close=False)        # keep the figure open for further edits
 ```
 
 ### Reference Utils (`utils/reference_utils.py`)
@@ -497,3 +500,60 @@ references = import_bib("references.bib")
 
 paper_content["references"] = references
 ```
+
+### Guideline Registry (`utils/guidelines.py`)
+
+모든 모듈이 저널 가이드라인을 읽는 단일 진입점. 캐시되며, 반환값은 독립 사본이라 수정해도 안전하다.
+
+```python
+from utils.guidelines import load_guideline, list_journals, resolve_journal_key, validate_guideline
+
+g = load_guideline("JWEIA")            # 대소문자/별칭/.json 접미사 허용
+key = resolve_journal_key("jcsr")      # → "steel_comp_struct"
+for j in list_journals():              # key, name, publisher, reference_style,
+    print(j["key"], j["abstract_word_limit"])  # abstract_word_limit, highlights_required ...
+issues = validate_guideline(g)         # [] if the JSON schema is valid
+```
+
+사용자 정의 저널은 `PAPERFACTORY_GUIDELINES_DIR` 환경변수로 다른 폴더에서 읽을 수 있다.
+
+### Equation Utils (`utils/equation_utils.py`)
+
+본문의 LaTeX 수식(`$...$`, `$$...$$`, `\(...\)`, `\[...\]`)을 추출·번호 부여·이미지화한다. `\$`는 수식이 아닌 달러 기호로 취급한다.
+
+```python
+from utils.equation_utils import extract_equations, number_equations, equations_to_text, save_equation_image
+
+eqs = extract_equations(section_text)              # [{"latex", "type": "inline"|"display", "position", "original"}]
+numbered_text, n = number_equations(section_text)  # display equations → (1), (2) ... (재실행해도 안전)
+plain = equations_to_text(section_text)            # Word/PDF용 읽기 쉬운 텍스트 (√, σ, ≤ ...)
+path = save_equation_image(r"\sigma = E \varepsilon", "eq_1")  # → outputs/figures/eq_1.png
+```
+
+### Pipeline Orchestrator (`pipeline/orchestrator.py`)
+
+파이프라인 상태를 `outputs/papers/<run_id>/pipeline_state.json`에 저장한다 (`PAPERFACTORY_RUNS_DIR`로 변경 가능). 각 단계 승인 후 `complete_step()`을 호출하고, Step 4에서 Step 3으로 돌아가야 할 때는 `revert_to()`를 사용한다.
+
+```python
+from pipeline import PaperPipeline, PipelineStep, find_state, list_runs
+
+p = PaperPipeline("ML wind pressure prediction", "jweia")   # 저널 키 검증
+p.complete_step(references=refs, note="18 papers, 12 within 5 years")
+p.revert_to(PipelineStep.CODE_EXECUTION, note="R² below target; retune")
+p = PaperPipeline.resume(find_state())                      # 가장 최근 run
+```
+
+### CLI (`cli.py`, 설치 시 `paperfactory`)
+
+스크립트/CI에서 쓰기 좋게 오류 시 종료 코드 1을 반환하며, `--json`으로 기계 판독 출력, `--strict`로 품질 게이트를 종료 코드로 만든다.
+
+```bash
+paperfactory check -p paper.json -j jweia --strict      # Step 5 품질 검증 (FAIL이면 exit 1)
+paperfactory checklist -p paper.json -j jweia           # 투고 준비 체크리스트
+paperfactory validate-refs -p paper.json -j jweia       # DOI/형식/중복 참고문헌 검사
+paperfactory export -p paper.json -j jweia --format docx latex pdf -o outputs/papers
+paperfactory reformat -p paper.json --from jweia --to eng_structures -o new.json
+paperfactory journals --json                            # 지원 저널 메타데이터
+```
+
+전체 명령: `new`, `status`, `resume`, `runs`, `check`, `review`, `checklist`, `cover-letter`, `export`, `reformat`, `validate-refs`, `analytics`, `abstract`, `import-bib`, `convert-refs`, `templates`, `sources`, `journals`.

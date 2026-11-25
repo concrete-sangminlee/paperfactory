@@ -38,3 +38,10 @@ docs/superpowers/
 
 # MCP server config (contains API keys)
 .mcp.json
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ruff_cache/

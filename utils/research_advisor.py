@@ -1,7 +1,178 @@
 """Research methodology advisors: statistical tests and figure type recommendations."""
 
+import warnings
+
 import numpy as np
 from scipy import stats
+
+# Below this sample size a normality test has too little power to be useful;
+# such samples are assumed normal (and reported as "n too small").
+_MIN_NORMALITY_N = 8
+# Shapiro-Wilk is used below this size, D'Agostino-Pearson above it.
+_SHAPIRO_MAX_N = 5000
+_ALPHA = 0.05
+
+
+def _format_p(p: float) -> str:
+    return "p<0.0001" if p < 1e-4 else f"p={p:.4f}"
+
+
+def _normality(sample: np.ndarray, alpha: float = _ALPHA) -> dict:
+    """Test one sample for normality at significance level ``alpha``.
+
+    Returns dict with test, scipy, p_value (None if not tested), is_normal and
+    constant (zero variance, where a normality test is undefined).
+    """
+    n = len(sample)
+    use_shapiro = n < _SHAPIRO_MAX_N
+    result = {
+        "test": "Shapiro-Wilk" if use_shapiro else "D'Agostino-Pearson",
+        "scipy": "scipy.stats.shapiro(data)" if use_shapiro else "scipy.stats.normaltest(data)",
+        "n": n,
+        "p_value": None,
+        "is_normal": True,
+        "constant": n > 1 and bool(np.ptp(sample) == 0),
+    }
+    if result["constant"]:
+        result["is_normal"] = False
+    elif n >= _MIN_NORMALITY_N:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            _, p = stats.shapiro(sample) if use_shapiro else stats.normaltest(sample)
+        result["p_value"] = float(p)
+        result["is_normal"] = bool(p > alpha)
+    return result
+
+
+def _equal_variances(group_data: list) -> bool:
+    """Levene's test for homogeneity of variance (True when not rejected/untestable)."""
+    if len(group_data) < 2 or any(len(g) < 2 for g in group_data):
+        return True
+    if all(np.ptp(g) == 0 for g in group_data):
+        return True
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        _, p = stats.levene(*group_data)
+    return not (np.isfinite(p) and p < _ALPHA)
+
+
+def _group_comparison(group_labels, group_data: list, paired: bool) -> dict:
+    """Recommend a group-comparison test from per-group characteristics."""
+    n_groups = len(group_data)
+    sizes = [len(g) for g in group_data]
+    notes = []
+
+    if paired and len(set(sizes)) > 1:
+        notes.append(
+            f"paired=True but group sizes differ ({sizes}); paired tests need matched "
+            "samples, so independent-samples tests are recommended instead."
+        )
+        paired = False
+    if min(sizes) < 2:
+        small = [str(g) for g, n in zip(group_labels, sizes, strict=True) if n < 2]
+        notes.append(
+            f"Group(s) {', '.join(small)} have fewer than 2 observations; "
+            "group comparisons are not meaningful. Collect more data."
+        )
+
+    if paired and n_groups == 2:
+        # Paired designs: the assumption concerns the within-subject differences.
+        checks = [_normality(group_data[1] - group_data[0])]
+        what = "paired differences"
+    else:
+        # Normality is assessed within each group/condition.  Testing the pooled
+        # data is wrong: groups with different means make it multimodal.  The
+        # per-group level is Bonferroni-adjusted so that normal data is not
+        # rejected more often just because there are more groups.
+        alpha = _ALPHA / n_groups
+        checks = [_normality(g, alpha) for g in group_data]
+        what = "each condition" if paired else "each group"
+    normal = all(c["is_normal"] for c in checks)
+    equal_var = _equal_variances(group_data)
+    tested = [_format_p(c["p_value"]) for c in checks if c["p_value"] is not None]
+    basis = f"normality of {what}" + (f" ({', '.join(tested)})" if tested else " (n too small)")
+
+    if n_groups == 2:
+        if paired and normal:
+            rec = {
+                "test": "Paired t-test",
+                "purpose": "Compare means of 2 paired groups",
+                "rationale": f"Paired differences are normally distributed; {basis}",
+                "scipy": "scipy.stats.ttest_rel(group1, group2)",
+            }
+        elif paired:
+            rec = {
+                "test": "Wilcoxon signed-rank",
+                "purpose": "Compare distributions of 2 paired groups",
+                "rationale": f"Paired differences are non-normal; {basis}",
+                "scipy": "scipy.stats.wilcoxon(group1, group2)",
+            }
+        elif normal and equal_var:
+            rec = {
+                "test": "Independent t-test",
+                "purpose": "Compare means of 2 groups",
+                "rationale": f"Data is normally distributed within groups, 2 groups; {basis}",
+                "scipy": "scipy.stats.ttest_ind(group1, group2)",
+            }
+        elif normal:
+            rec = {
+                "test": "Welch's t-test",
+                "purpose": "Compare means of 2 groups with unequal variances",
+                "rationale": f"Normal within groups but variances differ (Levene p<0.05); {basis}",
+                "scipy": "scipy.stats.ttest_ind(group1, group2, equal_var=False)",
+            }
+        else:
+            rec = {
+                "test": "Mann-Whitney U",
+                "purpose": "Compare distributions of 2 groups",
+                "rationale": f"Data is non-normal within groups, 2 groups; {basis}",
+                "scipy": "scipy.stats.mannwhitneyu(group1, group2)",
+            }
+    elif paired and normal:
+        rec = {
+            "test": "Repeated-measures ANOVA",
+            "purpose": f"Compare means across {n_groups} paired conditions",
+            "rationale": f"Normally distributed repeated measures, 3+ conditions; {basis}",
+            "scipy": "statsmodels.stats.anova.AnovaRM(df, depvar, subject, within).fit()",
+            "post_hoc": "Paired t-tests with Bonferroni/Holm correction",
+        }
+    elif paired:
+        rec = {
+            "test": "Friedman test",
+            "purpose": f"Compare distributions across {n_groups} paired conditions",
+            "rationale": f"Non-normal repeated measures, 3+ conditions; {basis}",
+            "scipy": "scipy.stats.friedmanchisquare(*groups)",
+            "post_hoc": "Nemenyi test (scikit-posthocs)",
+        }
+    elif normal and equal_var:
+        rec = {
+            "test": "One-way ANOVA",
+            "purpose": f"Compare means across {n_groups} groups",
+            "rationale": f"Data is normally distributed within groups, 3+ groups; {basis}",
+            "scipy": "scipy.stats.f_oneway(*groups)",
+            "post_hoc": "Tukey HSD: scipy.stats.tukey_hsd(*groups)",
+        }
+    elif normal:
+        rec = {
+            "test": "Welch's ANOVA",
+            "purpose": f"Compare means across {n_groups} groups with unequal variances",
+            "rationale": f"Normal within groups but variances differ (Levene p<0.05); {basis}",
+            "scipy": "statsmodels.stats.oneway.anova_oneway(groups, use_var='unequal')",
+            "post_hoc": "Games-Howell test",
+        }
+    else:
+        rec = {
+            "test": "Kruskal-Wallis H",
+            "purpose": f"Compare distributions across {n_groups} groups",
+            "rationale": f"Data is non-normal within groups, 3+ groups; {basis}",
+            "scipy": "scipy.stats.kruskal(*groups)",
+            "post_hoc": "Dunn's test (scikit-posthocs)",
+        }
+    labels = [g.item() if hasattr(g, "item") else g for g in group_labels]
+    rec["group_sizes"] = dict(zip(labels, sizes, strict=True))
+    if notes:
+        rec["warning"] = " ".join(notes)
+    return rec
 
 
 def recommend_statistical_tests(
@@ -12,104 +183,89 @@ def recommend_statistical_tests(
     Parameters
     ----------
     data : np.ndarray
-        Data array (1D for single-sample, 2D for multi-variable).
+        Data array (1D for single-sample, 2D for multi-variable). Any array-like
+        is accepted; NaN/inf values are excluded (and reported in a ``note``).
     groups : np.ndarray, optional
-        Group labels for group comparison tests.
+        Group labels for group comparison tests (same length as ``data``).
+        Normality is assessed within each group, variance homogeneity with
+        Levene's test.
     paired : bool
-        Whether groups are paired/matched samples.
+        Whether groups are paired/matched samples (observations matched by order
+        within each group; all groups must have the same size).
 
     Returns
     -------
     list[dict]
         Recommended tests with rationale and scipy function references.
     """
+    data = np.asarray(data, dtype=float)
     recommendations = []
 
     if data.ndim == 1:
-        n = len(data)
-
-        # Normality test
-        if n >= 8:
-            _, p_normal = stats.shapiro(data) if n < 5000 else stats.normaltest(data)
-            is_normal = p_normal > 0.05
-        else:
-            is_normal = True
-            p_normal = None
-
-        recommendations.append(
-            {
-                "test": "Shapiro-Wilk" if n < 5000 else "D'Agostino-Pearson",
-                "purpose": "Normality check",
-                "result": f"p={p_normal:.4f}" if p_normal else "n too small",
-                "conclusion": "Normal" if is_normal else "Non-normal",
-                "scipy": "scipy.stats.shapiro(data)",
-            }
-        )
-
         if groups is not None:
-            unique_groups = np.unique(groups)
-            n_groups = len(unique_groups)
-            group_data = [data[groups == g] for g in unique_groups]
+            groups = np.asarray(groups)
+            if groups.shape != data.shape:
+                raise ValueError(
+                    f"groups must be a 1-D array with one label per data value "
+                    f"(got shape {groups.shape} for data of shape {data.shape})"
+                )
+        keep = np.isfinite(data)
+        if groups is not None and groups.dtype.kind == "f":
+            keep &= ~np.isnan(groups)
+        n_dropped = int((~keep).sum())
+        if n_dropped:
+            data = data[keep]
+            groups = groups[keep] if groups is not None else None
 
-            if n_groups == 2:
-                if is_normal:
-                    test_name = "Paired t-test" if paired else "Independent t-test"
-                    scipy_func = "scipy.stats.ttest_rel" if paired else "scipy.stats.ttest_ind"
-                    recommendations.append(
-                        {
-                            "test": test_name,
-                            "purpose": "Compare means of 2 groups",
-                            "rationale": "Data is normally distributed, 2 groups",
-                            "scipy": f"{scipy_func}(group1, group2)",
-                        }
-                    )
-                else:
-                    test_name = "Wilcoxon signed-rank" if paired else "Mann-Whitney U"
-                    scipy_func = "scipy.stats.wilcoxon" if paired else "scipy.stats.mannwhitneyu"
-                    recommendations.append(
-                        {
-                            "test": test_name,
-                            "purpose": "Compare distributions of 2 groups",
-                            "rationale": "Data is non-normal, 2 groups",
-                            "scipy": f"{scipy_func}(group1, group2)",
-                        }
-                    )
-            elif n_groups > 2:
-                if is_normal:
-                    recommendations.append(
-                        {
-                            "test": "One-way ANOVA",
-                            "purpose": f"Compare means across {n_groups} groups",
-                            "rationale": "Data is normally distributed, 3+ groups",
-                            "scipy": "scipy.stats.f_oneway(*groups)",
-                            "post_hoc": "Tukey HSD: scipy.stats.tukey_hsd(*groups)",
-                        }
-                    )
-                else:
-                    recommendations.append(
-                        {
-                            "test": "Kruskal-Wallis H",
-                            "purpose": f"Compare distributions across {n_groups} groups",
-                            "rationale": "Data is non-normal, 3+ groups",
-                            "scipy": "scipy.stats.kruskal(*groups)",
-                            "post_hoc": "Dunn's test (scikit-posthocs)",
-                        }
-                    )
+        normality = _normality(data)
+        is_normal = normality["is_normal"]
+        p_normal = normality["p_value"]
+        if normality["constant"]:
+            result = "zero variance"
+            conclusion = "Constant data"
+        else:
+            result = _format_p(p_normal) if p_normal is not None else "n too small"
+            conclusion = "Normal" if is_normal else "Non-normal"
+        rec = {
+            "test": normality["test"],
+            "purpose": "Normality check",
+            "result": result,
+            "conclusion": conclusion,
+            "scipy": normality["scipy"],
+            "p_value": p_normal,
+            "n": len(data),
+        }
+        if n_dropped:
+            rec["note"] = f"{n_dropped} non-finite value(s) (NaN/inf) excluded"
+        if normality["constant"] or len(data) < 2:
+            rec["warning"] = (
+                "Data has no variability (or fewer than 2 values); "
+                "group comparison and correlation tests are undefined."
+            )
+        recommendations.append(rec)
+        degenerate = "warning" in rec
+
+        if groups is not None and not degenerate:
+            unique_groups = np.unique(groups)
+            group_data = [data[groups == g] for g in unique_groups]
+            if len(unique_groups) >= 2:
+                recommendations.append(_group_comparison(unique_groups, group_data, paired))
 
         # Correlation
-        recommendations.append(
-            {
-                "test": "Pearson r" if is_normal else "Spearman rho",
-                "purpose": "Correlation between variables",
-                "rationale": f"Data is {'normally' if is_normal else 'non-normally'} distributed",
-                "scipy": "scipy.stats.pearsonr(x, y)"
-                if is_normal
-                else "scipy.stats.spearmanr(x, y)",
-            }
-        )
+        if not degenerate:
+            recommendations.append(
+                {
+                    "test": "Pearson r" if is_normal else "Spearman rho",
+                    "purpose": "Correlation between variables",
+                    "rationale": f"Data is {'' if is_normal else 'non-'}normally distributed",
+                    "scipy": "scipy.stats.pearsonr(x, y)"
+                    if is_normal
+                    else "scipy.stats.spearmanr(x, y)",
+                }
+            )
 
     elif data.ndim == 2:
-        n_samples, n_features = data.shape
+        _, n_features = data.shape
         recommendations.append(
             {
                 "test": "Pearson correlation matrix",
@@ -124,6 +280,10 @@ def recommend_statistical_tests(
                     "purpose": "Dimensionality reduction / feature analysis",
                     "scipy": "sklearn.decomposition.PCA(n_components=k).fit(data)",
                 }
+            )
+        if not np.isfinite(data).all():
+            recommendations[0]["note"] = (
+                "Data contains NaN/inf; drop or impute them first (e.g. pandas.DataFrame.corr)."
             )
 
     # Effect size
@@ -163,6 +323,7 @@ def recommend_figure_type(
     list[dict]
         Recommended figure types with matplotlib code snippets.
     """
+    data = np.asarray(data)
     if n_variables is None:
         n_variables = data.shape[1] if data.ndim == 2 else 1
 
@@ -213,6 +374,16 @@ def recommend_figure_type(
                         "code": "sns.heatmap(df.corr(), annot=True, cmap='RdBu_r')",
                     }
                 )
+
+        if comparison == "trend":
+            recommendations.append(
+                {
+                    "type": "Line plot with markers",
+                    "best_for": "Trend of a response versus a continuous parameter",
+                    "when": "Parametric studies, convergence, response vs. load/time",
+                    "code": "ax.plot(x, y, marker='o')",
+                }
+            )
 
         if comparison == "distribution":
             recommendations.append(

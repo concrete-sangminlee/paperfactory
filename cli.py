@@ -1,134 +1,306 @@
 #!/usr/bin/env python3
-"""PaperFactory CLI — Command-line interface for paper generation pipeline.
+"""PaperFactory CLI — command-line interface for the paper generation toolkit.
 
-Usage:
-    python cli.py new --topic "..." --journal jweia
-    python cli.py status [--run-id RUN_ID]
-    python cli.py resume --run-id RUN_ID
-    python cli.py check --paper paper_content.json --journal jweia
-    python cli.py review --paper paper_content.json --journal jweia
-    python cli.py cover-letter --paper paper_content.json --journal jweia
-    python cli.py sources --topic "wind pressure prediction"
-    python cli.py journals
+Examples::
+
+    paperfactory new --topic "..." --journal jweia
+    paperfactory status [--run-id RUN_ID]
+    paperfactory runs
+    paperfactory check --paper paper.json --journal jweia [--strict] [--json]
+    paperfactory export --paper paper.json --journal jweia --format docx latex pdf
+    paperfactory journals [--json]
+
+Every command exits with status 0 on success, 1 on a user/input error and,
+with ``--strict``, 1 when a quality gate fails — so the CLI is safe to use in
+scripts and CI.
 """
 
+from __future__ import annotations
+
 import argparse
-import glob
 import json
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from pipeline.orchestrator import PaperPipeline
-from utils.abstract_generator import generate_abstract, improve_abstract
-from utils.ai_reviewer import review_paper
-from utils.bibtex_import import import_bib
-from utils.citation_converter import convert_style
-from utils.data_sources import suggest_sources
-from utils.paper_analytics import analyze_paper
-from utils.quality_checker import check_paper
-from utils.submission_utils import generate_cover_letter
-from utils.template_system import generate_skeleton, list_templates
+from pipeline.orchestrator import PaperPipeline, find_state, list_runs  # noqa: E402
+from utils.guidelines import (  # noqa: E402
+    UnknownJournalError,
+    list_journals,
+    load_guideline,
+    resolve_journal_key,
+)
+
+__version__ = "1.1.0"
+
+EXIT_OK = 0
+EXIT_ERROR = 1
 
 
-def cmd_new(args):
+class CLIError(Exception):
+    """A user-facing error: printed to stderr without a traceback."""
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _print_json(data) -> None:
+    print(json.dumps(data, indent=2, ensure_ascii=False, default=str))
+
+
+def _journal(key: str) -> str:
+    try:
+        return resolve_journal_key(key)
+    except UnknownJournalError as e:
+        raise CLIError(str(e)) from None
+
+
+def _load_paper(path: str) -> dict:
+    """Load paper_content from a JSON file, raising CLIError on any problem."""
+    if not os.path.exists(path):
+        raise CLIError(f"File not found: {path}")
+    try:
+        with open(path, encoding="utf-8") as f:
+            paper = json.load(f)
+    except json.JSONDecodeError as e:
+        raise CLIError(f"Invalid JSON in {path}: {e}") from None
+    if not isinstance(paper, dict):
+        raise CLIError(f"{path} must contain a JSON object (paper_content dict)")
+    return paper
+
+
+def _write_text(path: str, text: str) -> None:
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
+def _split_figures(value: str | None) -> list | None:
+    if not value:
+        return None
+    figures = [p.strip() for p in value.split(",") if p.strip()]
+    missing = [p for p in figures if not os.path.exists(p)]
+    if missing:
+        print(f"Warning: figure file(s) not found: {', '.join(missing)}", file=sys.stderr)
+    return figures
+
+
+def _references(paper: dict) -> list:
+    refs = paper.get("references", [])
+    if isinstance(refs, str):
+        refs = [r for r in refs.splitlines() if r.strip()]
+    return list(refs)
+
+
+# ── Pipeline commands ────────────────────────────────────────────────────────
+
+
+def cmd_new(args) -> int:
     """Start a new paper generation pipeline."""
-    pipeline = PaperPipeline(args.topic, args.journal)
-    os.makedirs(pipeline.state.output_dir, exist_ok=True)
-    pipeline.state.save()
+    try:
+        pipeline = PaperPipeline(args.topic, args.journal)
+    except ValueError as e:
+        raise CLIError(str(e)) from None
+    path = pipeline.state.save()
     print(pipeline.show_status())
     print(f"\nPipeline created: {pipeline.state.run_id}")
-    print(f"State saved to: {pipeline.state.output_dir}/pipeline_state.json")
+    print(f"State saved to: {path}")
     print("\nNext: Open Claude Code and provide the topic to start Step 1 (Literature Review).")
+    return EXIT_OK
 
 
-def cmd_status(args):
+def _resume(run_id: str | None) -> PaperPipeline:
+    state_path = find_state(run_id)
+    if not state_path:
+        if run_id:
+            raise CLIError(f"Pipeline not found: {run_id}")
+        raise CLIError("No pipeline found. Use 'paperfactory new' to create one.")
+    try:
+        return PaperPipeline.resume(state_path)
+    except (ValueError, KeyError, json.JSONDecodeError) as e:
+        raise CLIError(f"Corrupt pipeline state {state_path}: {e}") from None
+
+
+def cmd_status(args) -> int:
     """Show pipeline status."""
-    state_path = _find_state(args.run_id)
-    if not state_path:
-        print("No pipeline found. Use 'python cli.py new' to create one.")
-        return
-    pipeline = PaperPipeline.resume(state_path)
-    print(pipeline.show_status())
-    print(f"\nProgress: {pipeline.progress:.0%}")
+    pipeline = _resume(args.run_id)
+    if args.json:
+        _print_json(pipeline.state.to_dict() | {"progress": pipeline.progress})
+    else:
+        print(pipeline.show_status())
+    return EXIT_OK
 
 
-def cmd_resume(args):
+def cmd_resume(args) -> int:
     """Resume a pipeline."""
-    state_path = _find_state(args.run_id)
-    if not state_path:
-        print(f"Pipeline not found: {args.run_id}")
-        return
-    pipeline = PaperPipeline.resume(state_path)
+    pipeline = _resume(args.run_id)
     print(pipeline.show_status())
-    print(f"\nTo continue, open Claude Code and work on: {pipeline.current_step_description}")
+    if pipeline.is_complete:
+        print("\nPipeline is complete.")
+    else:
+        print(f"\nTo continue, open Claude Code and work on: {pipeline.current_step_description}")
+    return EXIT_OK
 
 
-def cmd_check(args):
+def cmd_runs(args) -> int:
+    """List saved pipeline runs."""
+    runs = list_runs()
+    if args.json:
+        _print_json(runs)
+        return EXIT_OK
+    if not runs:
+        print("No pipeline runs found.")
+        return EXIT_OK
+    for r in runs:
+        print(
+            f"  {r['run_id']:<24} {r['progress']:>4.0%}  {r['current_step']:<18} "
+            f"{r['journal_key']:<16} {r['topic'][:60]}"
+        )
+    return EXIT_OK
+
+
+# ── Paper commands ───────────────────────────────────────────────────────────
+
+
+def cmd_check(args) -> int:
     """Run quality check on a paper."""
+    from utils.quality_checker import check_paper
+
     paper = _load_paper(args.paper)
-    if not paper:
-        return
-    figures = args.figures.split(",") if args.figures else None
-    result = check_paper(paper, args.journal, figures=figures)
-    print(result["summary"])
+    result = check_paper(paper, _journal(args.journal), figures=_split_figures(args.figures))
+    if args.json:
+        _print_json(result)
+    else:
+        print(result["summary"])
+    return EXIT_ERROR if args.strict and not result["passed"] else EXIT_OK
 
 
-def cmd_review(args):
+def cmd_review(args) -> int:
     """Run AI reviewer simulation."""
+    from utils.ai_reviewer import review_paper
+
     paper = _load_paper(args.paper)
-    if not paper:
-        return
-    result = review_paper(paper, args.journal)
-    print(result["summary"])
+    result = review_paper(paper, _journal(args.journal), figures=_split_figures(args.figures))
+    if args.json:
+        _print_json(result)
+    else:
+        print(result["summary"])
+    return EXIT_OK
 
 
-def cmd_cover_letter(args):
+def cmd_checklist(args) -> int:
+    """Run the journal-specific submission checklist."""
+    from utils.submission_utils import submission_checklist
+
+    paper = _load_paper(args.paper)
+    result = submission_checklist(
+        paper, _journal(args.journal), figures=_split_figures(args.figures)
+    )
+    if args.json:
+        _print_json(result)
+    else:
+        for item in result["items"]:
+            mark = "PASS" if item["passed"] else "FAIL"
+            note = f" — {item['note']}" if item.get("note") else ""
+            print(f"  [{mark}] {item['description']}{note}")
+        print(f"\nReady to submit: {'YES' if result['ready'] else 'NO'}")
+    return EXIT_ERROR if args.strict and not result["ready"] else EXIT_OK
+
+
+def cmd_cover_letter(args) -> int:
     """Generate a cover letter."""
+    from utils.submission_utils import generate_cover_letter
+
     paper = _load_paper(args.paper)
-    if not paper:
-        return
-    letter = generate_cover_letter(paper, args.journal, editor_name=args.editor)
+    letter = generate_cover_letter(paper, _journal(args.journal), editor_name=args.editor)
     print(letter)
     if args.output:
-        with open(args.output, "w") as f:
-            f.write(letter)
+        _write_text(args.output, letter)
         print(f"\nSaved to: {args.output}")
+    return EXIT_OK
 
 
-def cmd_sources(args):
-    """Suggest data sources for a topic."""
-    sources = suggest_sources(args.topic)
-    if not sources:
-        print("No matching data sources found.")
-        return
-    for s in sources:
-        print(f"\n[{s.get('key', '?')}] {s['name']} (relevance: {s['relevance_score']})")
-        print(f"  URL: {s['url']}")
-        print(f"  Access: {s['access']}")
-        print(f"  {s['description'][:120]}...")
-
-
-def cmd_journals(args):
-    """List supported journals."""
-    guidelines_dir = os.path.join(os.path.dirname(__file__), "guidelines")
-    for f in sorted(os.listdir(guidelines_dir)):
-        if f.endswith(".json"):
-            with open(os.path.join(guidelines_dir, f)) as fh:
-                g = json.load(fh)
-            key = f.replace(".json", "")
-            name = g.get("journal_name", key)
-            publisher = g.get("publisher", "")
-            print(f"  {key:<20} {name} ({publisher})")
-
-
-def cmd_analytics(args):
-    """Analyze paper readability and statistics."""
+def cmd_export(args) -> int:
+    """Export a paper to Word, LaTeX and/or PDF."""
     paper = _load_paper(args.paper)
-    if not paper:
-        return
+    journal = _journal(args.journal)
+    figures = _split_figures(args.figures)
+    outputs = {}
+    for fmt in dict.fromkeys(args.format):  # de-duplicate, keep order
+        try:
+            if fmt == "docx":
+                from utils.word_generator import generate_word
+
+                outputs["docx"] = generate_word(paper, journal, figures, output_dir=args.output_dir)
+            elif fmt == "latex":
+                from utils.latex_generator import generate_latex
+
+                tex, bib = generate_latex(paper, journal, figures, output_dir=args.output_dir)
+                outputs["tex"], outputs["bib"] = tex, bib
+            elif fmt == "pdf":
+                from utils.pdf_generator import generate_pdf
+
+                outputs["pdf"] = generate_pdf(paper, journal, figures, output_dir=args.output_dir)
+        except (KeyError, TypeError, ValueError, OSError) as e:
+            raise CLIError(f"{fmt} export failed: {type(e).__name__}: {e}") from None
+    if args.json:
+        _print_json(outputs)
+    else:
+        for kind, path in outputs.items():
+            print(f"  {kind:<5} {path}")
+    return EXIT_OK
+
+
+def cmd_reformat(args) -> int:
+    """Reformat a paper for a different journal (e.g. after rejection)."""
+    from utils.submission_utils import reformat_paper
+
+    paper = _load_paper(args.paper)
+    new_paper = reformat_paper(paper, _journal(args.from_journal), _journal(args.to_journal))
+    text = json.dumps(new_paper, indent=2, ensure_ascii=False)
+    if args.output:
+        _write_text(args.output, text)
+        print(f"Reformatted paper saved to: {args.output}")
+    else:
+        print(text)
+    for warning in new_paper.get("_warnings", []):
+        print(f"Warning: {warning}", file=sys.stderr)
+    return EXIT_OK
+
+
+def cmd_validate_refs(args) -> int:
+    """Validate references against a journal's reference rules."""
+    from utils.reference_utils import check_duplicates, validate_references
+
+    paper = _load_paper(args.paper)
+    refs = _references(paper)
+    issues = validate_references(refs, load_guideline(_journal(args.journal)))
+    duplicates = check_duplicates(refs)
+    if args.json:
+        _print_json({"count": len(refs), "issues": issues, "duplicates": duplicates})
+    else:
+        print(f"References: {len(refs)}")
+        for issue in issues:
+            print(f"  [{issue.get('index', '?')}] {issue.get('issue', issue)}")
+        for dup in duplicates:
+            print(f"  duplicate: #{dup['index_a']} and #{dup['index_b']}")
+        if not issues and not duplicates:
+            print("  No issues found.")
+    has_problems = bool(issues or duplicates)
+    return EXIT_ERROR if args.strict and has_problems else EXIT_OK
+
+
+def cmd_analytics(args) -> int:
+    """Analyze paper readability and statistics."""
+    from utils.paper_analytics import analyze_paper
+
+    paper = _load_paper(args.paper)
     result = analyze_paper(paper)
+    if args.json:
+        _print_json(result)
+        return EXIT_OK
     print(result["summary"])
     if args.verbose:
         print("\nSection balance:")
@@ -138,190 +310,255 @@ def cmd_analytics(args):
         print("\nTop content words:")
         for w in result["vocabulary"]["top_words"][:10]:
             print(f"  {w['word']:<20} {w['count']}")
+    return EXIT_OK
 
 
-def cmd_abstract(args):
+def cmd_abstract(args) -> int:
     """Generate or improve abstract."""
+    from utils.abstract_generator import generate_abstract, improve_abstract
+
     paper = _load_paper(args.paper)
-    if not paper:
-        return
     if args.generate:
         abstract = generate_abstract(paper, max_words=args.max_words)
         print("Generated abstract:")
         print(abstract)
-    else:
-        existing = paper.get("abstract", "")
-        if not existing:
-            print("No abstract found. Use --generate to create one.")
-            return
-        result = improve_abstract(existing, paper, max_words=args.max_words)
-        print(f"Abstract score: {result['score']}/100")
-        print(f"Word count: {result['word_count']}")
-        if result["suggestions"]:
-            print("\nSuggestions:")
-            for s in result["suggestions"]:
-                print(f"  - {s}")
+        return EXIT_OK
+    existing = paper.get("abstract", "")
+    if not existing:
+        raise CLIError("No abstract found. Use --generate to create one.")
+    result = improve_abstract(existing, paper, max_words=args.max_words)
+    print(f"Abstract score: {result['score']}/100")
+    print(f"Word count: {result['word_count']}")
+    if result["suggestions"]:
+        print("\nSuggestions:")
+        for s in result["suggestions"]:
+            print(f"  - {s}")
+    return EXIT_OK
 
 
-def cmd_import_bib(args):
+def cmd_import_bib(args) -> int:
     """Import references from BibTeX file."""
+    from utils.bibtex_import import import_bib
+
+    if not os.path.exists(args.bib):
+        raise CLIError(f"File not found: {args.bib}")
     refs = import_bib(args.bib)
     print(f"Imported {len(refs)} references:")
     for ref in refs:
         print(f"  {ref}")
     if args.output:
-        paper = {"references": refs}
-        with open(args.output, "w") as f:
-            json.dump(paper, f, indent=2)
+        _write_text(args.output, json.dumps({"references": refs}, indent=2, ensure_ascii=False))
         print(f"\nSaved to: {args.output}")
+    return EXIT_OK
 
 
-def cmd_convert_refs(args):
+def cmd_convert_refs(args) -> int:
     """Convert reference citation style."""
+    from utils.citation_converter import convert_style
+
     paper = _load_paper(args.paper)
-    if not paper:
-        return
-    refs = paper.get("references", [])
-    converted = convert_style(refs, args.style)
-    for ref in converted:
+    for ref in convert_style(_references(paper), args.style):
         print(ref)
+    return EXIT_OK
 
 
-def cmd_templates(args):
+def cmd_templates(args) -> int:
     """List or generate from paper templates."""
+    from utils.template_system import generate_skeleton, list_templates
+
     if args.generate:
-        skeleton = generate_skeleton(
-            args.generate, topic=args.topic or "", journal_key=args.journal or ""
-        )
+        keys = {t["key"] for t in list_templates()}
+        if args.generate not in keys:
+            raise CLIError(
+                f"Unknown template '{args.generate}'. Available: {', '.join(sorted(keys))}"
+            )
+        journal = _journal(args.journal) if args.journal else ""
+        skeleton = generate_skeleton(args.generate, topic=args.topic or "", journal_key=journal)
+        text = json.dumps(skeleton, indent=2, ensure_ascii=False)
         if args.output:
-            with open(args.output, "w") as f:
-                json.dump(skeleton, f, indent=2, ensure_ascii=False)
+            _write_text(args.output, text)
             print(f"Skeleton saved to: {args.output}")
         else:
-            print(json.dumps(skeleton, indent=2, ensure_ascii=False))
+            print(text)
     else:
         print("Available templates:")
         for t in list_templates():
             print(f"  {t['key']:<20} {t['name']}")
             print(f"  {'':20} {t['description']}")
+    return EXIT_OK
 
 
-def _find_state(run_id=None):
-    """Find pipeline state file."""
-    if run_id:
-        path = os.path.join("outputs", "papers", run_id, "pipeline_state.json")
-        return path if os.path.exists(path) else None
-    # Find most recent
-    pattern = os.path.join("outputs", "papers", "run_*", "pipeline_state.json")
-    states = sorted(glob.glob(pattern), reverse=True)
-    return states[0] if states else None
+# ── Reference commands ───────────────────────────────────────────────────────
 
 
-def _load_paper(path):
-    """Load paper_content from JSON file."""
-    if not os.path.exists(path):
-        print(f"File not found: {path}")
-        return None
-    with open(path) as f:
-        return json.load(f)
+def cmd_sources(args) -> int:
+    """Suggest data sources for a topic."""
+    from utils.data_sources import suggest_sources
+
+    sources = suggest_sources(args.topic)
+    if args.json:
+        _print_json(sources)
+        return EXIT_OK
+    if not sources:
+        print("No matching data sources found.")
+        return EXIT_OK
+    for s in sources:
+        print(f"\n[{s.get('key', '?')}] {s['name']} (relevance: {s['relevance_score']})")
+        print(f"  URL: {s['url']}")
+        print(f"  Access: {s['access']}")
+        desc = s["description"]
+        print(f"  {desc[:120]}{'...' if len(desc) > 120 else ''}")
+    return EXIT_OK
 
 
-def main():
+def cmd_journals(args) -> int:
+    """List supported journals."""
+    journals = list_journals()
+    if args.json:
+        _print_json(journals)
+        return EXIT_OK
+    for j in journals:
+        print(f"  {j['key']:<20} {j['name']} ({j['publisher']})")
+    return EXIT_OK
+
+
+# ── Parser ───────────────────────────────────────────────────────────────────
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="paperfactory",
         description="PaperFactory — AI Research Paper Agent for Civil Engineering",
     )
-    subparsers = parser.add_subparsers(dest="command")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    sub = parser.add_subparsers(dest="command", metavar="<command>")
 
-    # new
-    p_new = subparsers.add_parser("new", help="Start a new paper pipeline")
-    p_new.add_argument("--topic", "-t", required=True, help="Research topic")
-    p_new.add_argument("--journal", "-j", required=True, help="Target journal key")
+    def add(name, func, help_text, paper=False, journal=False, json_flag=False):
+        p = sub.add_parser(name, help=help_text, description=help_text)
+        if paper:
+            p.add_argument("--paper", "-p", required=True, help="paper_content JSON file")
+        if journal:
+            p.add_argument("--journal", "-j", required=True, help="Journal key (see 'journals')")
+        if json_flag:
+            p.add_argument("--json", action="store_true", help="Machine-readable JSON output")
+        p.set_defaults(func=func)
+        return p
 
-    # status
-    p_status = subparsers.add_parser("status", help="Show pipeline status")
-    p_status.add_argument("--run-id", "-r", help="Specific run ID")
+    # Pipeline
+    p = add("new", cmd_new, "Start a new paper pipeline")
+    p.add_argument("--topic", "-t", required=True, help="Research topic")
+    p.add_argument("--journal", "-j", required=True, help="Target journal key")
 
-    # resume
-    p_resume = subparsers.add_parser("resume", help="Resume a pipeline")
-    p_resume.add_argument("--run-id", "-r", required=True, help="Run ID to resume")
+    p = add("status", cmd_status, "Show pipeline status", json_flag=True)
+    p.add_argument("--run-id", "-r", help="Specific run ID (default: most recent)")
 
-    # check
-    p_check = subparsers.add_parser("check", help="Quality check a paper")
-    p_check.add_argument("--paper", "-p", required=True, help="Paper content JSON file")
-    p_check.add_argument("--journal", "-j", required=True, help="Journal key")
-    p_check.add_argument("--figures", "-f", help="Comma-separated figure paths")
+    p = add("resume", cmd_resume, "Resume a pipeline")
+    p.add_argument("--run-id", "-r", required=True, help="Run ID to resume")
 
-    # review
-    p_review = subparsers.add_parser("review", help="AI reviewer simulation")
-    p_review.add_argument("--paper", "-p", required=True, help="Paper content JSON file")
-    p_review.add_argument("--journal", "-j", required=True, help="Journal key")
+    add("runs", cmd_runs, "List saved pipeline runs", json_flag=True)
 
-    # cover-letter
-    p_cl = subparsers.add_parser("cover-letter", help="Generate cover letter")
-    p_cl.add_argument("--paper", "-p", required=True, help="Paper content JSON file")
-    p_cl.add_argument("--journal", "-j", required=True, help="Journal key")
-    p_cl.add_argument("--editor", "-e", default="Editor-in-Chief", help="Editor name")
-    p_cl.add_argument("--output", "-o", help="Output file path")
+    # Paper quality & submission
+    p = add("check", cmd_check, "Quality check a paper", paper=True, journal=True, json_flag=True)
+    p.add_argument("--figures", "-f", help="Comma-separated figure paths")
+    p.add_argument("--strict", action="store_true", help="Exit 1 if any critical check fails")
 
-    # sources
-    p_src = subparsers.add_parser("sources", help="Suggest data sources")
-    p_src.add_argument("--topic", "-t", required=True, help="Research topic")
+    p = add(
+        "review", cmd_review, "AI reviewer simulation", paper=True, journal=True, json_flag=True
+    )
+    p.add_argument("--figures", "-f", help="Comma-separated figure paths")
 
-    # journals
-    subparsers.add_parser("journals", help="List supported journals")
+    p = add(
+        "checklist",
+        cmd_checklist,
+        "Submission readiness checklist",
+        paper=True,
+        journal=True,
+        json_flag=True,
+    )
+    p.add_argument("--figures", "-f", help="Comma-separated figure paths")
+    p.add_argument("--strict", action="store_true", help="Exit 1 if not ready to submit")
 
-    # analytics
-    p_analytics = subparsers.add_parser("analytics", help="Paper readability & statistics")
-    p_analytics.add_argument("--paper", "-p", required=True, help="Paper content JSON")
-    p_analytics.add_argument("--verbose", "-v", action="store_true", help="Show detailed breakdown")
+    p = add("cover-letter", cmd_cover_letter, "Generate cover letter", paper=True, journal=True)
+    p.add_argument("--editor", "-e", default="Editor-in-Chief", help="Editor name")
+    p.add_argument("--output", "-o", help="Output file path")
 
-    # abstract
-    p_abstract = subparsers.add_parser("abstract", help="Generate or improve abstract")
-    p_abstract.add_argument("--paper", "-p", required=True, help="Paper content JSON")
-    p_abstract.add_argument("--generate", "-g", action="store_true", help="Generate new abstract")
-    p_abstract.add_argument("--max-words", "-m", type=int, default=250, help="Max words")
+    p = add(
+        "export",
+        cmd_export,
+        "Export to Word / LaTeX / PDF",
+        paper=True,
+        journal=True,
+        json_flag=True,
+    )
+    p.add_argument(
+        "--format",
+        nargs="+",
+        choices=["docx", "latex", "pdf"],
+        default=["docx"],
+        help="Output format(s) (default: docx)",
+    )
+    p.add_argument("--figures", "-f", help="Comma-separated figure paths")
+    p.add_argument("--output-dir", "-o", help="Output directory (default: outputs/papers)")
 
-    # import-bib
-    p_bib = subparsers.add_parser("import-bib", help="Import BibTeX references")
-    p_bib.add_argument("--bib", "-b", required=True, help="Path to .bib file")
-    p_bib.add_argument("--output", "-o", help="Save as JSON")
+    p = add("reformat", cmd_reformat, "Reformat a paper for another journal", paper=True)
+    p.add_argument("--from", dest="from_journal", required=True, help="Current journal key")
+    p.add_argument("--to", dest="to_journal", required=True, help="Target journal key")
+    p.add_argument("--output", "-o", help="Write reformatted paper JSON here")
 
-    # convert-refs
-    p_conv = subparsers.add_parser("convert-refs", help="Convert citation style")
-    p_conv.add_argument("--paper", "-p", required=True, help="Paper content JSON")
-    p_conv.add_argument("--style", "-s", required=True, choices=["numbered", "author_date", "apa"])
+    p = add(
+        "validate-refs",
+        cmd_validate_refs,
+        "Validate references against journal rules",
+        paper=True,
+        journal=True,
+        json_flag=True,
+    )
+    p.add_argument("--strict", action="store_true", help="Exit 1 if any issue is found")
 
-    # templates
-    p_tmpl = subparsers.add_parser("templates", help="List or generate from templates")
-    p_tmpl.add_argument("--generate", "-g", help="Template key to generate from")
-    p_tmpl.add_argument("--topic", "-t", help="Research topic for skeleton")
-    p_tmpl.add_argument("--journal", "-j", help="Target journal key")
-    p_tmpl.add_argument("--output", "-o", help="Output JSON path")
+    # Writing aids
+    p = add(
+        "analytics", cmd_analytics, "Paper readability & statistics", paper=True, json_flag=True
+    )
+    p.add_argument("--verbose", "-v", action="store_true", help="Show detailed breakdown")
 
-    args = parser.parse_args()
+    p = add("abstract", cmd_abstract, "Generate or improve abstract", paper=True)
+    p.add_argument("--generate", "-g", action="store_true", help="Generate new abstract")
+    p.add_argument("--max-words", "-m", type=int, default=250, help="Max words")
 
-    commands = {
-        "new": cmd_new,
-        "status": cmd_status,
-        "resume": cmd_resume,
-        "check": cmd_check,
-        "review": cmd_review,
-        "cover-letter": cmd_cover_letter,
-        "sources": cmd_sources,
-        "journals": cmd_journals,
-        "analytics": cmd_analytics,
-        "abstract": cmd_abstract,
-        "import-bib": cmd_import_bib,
-        "convert-refs": cmd_convert_refs,
-        "templates": cmd_templates,
-    }
+    p = add("import-bib", cmd_import_bib, "Import BibTeX references")
+    p.add_argument("--bib", "-b", required=True, help="Path to .bib file")
+    p.add_argument("--output", "-o", help="Save as JSON")
 
-    if args.command in commands:
-        commands[args.command](args)
-    else:
+    p = add("convert-refs", cmd_convert_refs, "Convert citation style", paper=True)
+    p.add_argument("--style", "-s", required=True, choices=["numbered", "author_date", "apa"])
+
+    p = add("templates", cmd_templates, "List or generate from templates")
+    p.add_argument("--generate", "-g", help="Template key to generate from")
+    p.add_argument("--topic", "-t", help="Research topic for skeleton")
+    p.add_argument("--journal", "-j", help="Target journal key")
+    p.add_argument("--output", "-o", help="Output JSON path")
+
+    # Reference data
+    p = add("sources", cmd_sources, "Suggest data sources", json_flag=True)
+    p.add_argument("--topic", "-t", required=True, help="Research topic")
+
+    add("journals", cmd_journals, "List supported journals", json_flag=True)
+
+    return parser
+
+
+def main(argv: list | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if not getattr(args, "func", None):
         parser.print_help()
+        return EXIT_OK
+    try:
+        return args.func(args)
+    except CLIError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return EXIT_ERROR
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
