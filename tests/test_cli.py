@@ -99,6 +99,23 @@ class TestPaperCommands:
         code, out, _ = run(capsys, "review", "-p", SAMPLE, "-j", "eng_structures")
         assert code == 0 and out.strip()
 
+    def test_review_forwards_figures(self, capsys, tmp_path):
+        # The sample paper lists 6 figure captions; passing only 2 figure files must be
+        # reflected in the review, proving --figures reaches review_paper.
+        figs = []
+        for i in range(2):
+            f = tmp_path / f"fig_{i}.png"
+            f.write_bytes(b"\x89PNG\r\n\x1a\n")
+            figs.append(str(f))
+        code, out, _ = run(
+            capsys, "review", "-p", SAMPLE, "-j", "jweia", "-f", ",".join(figs), "--json"
+        )
+        comments = [c["comment"] for c in json.loads(out)["comments"]]
+        assert code == 0
+        assert any("Only 2 figures" in c for c in comments)
+        _, out2, _ = run(capsys, "review", "-p", SAMPLE, "-j", "jweia", "--json")
+        assert not any("Only 2 figures" in c["comment"] for c in json.loads(out2)["comments"])
+
     def test_review_json(self, capsys):
         code, out, _ = run(capsys, "review", "-p", SAMPLE, "-j", "jweia", "--json")
         assert code == 0 and "decision" in json.loads(out)

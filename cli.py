@@ -182,7 +182,7 @@ def cmd_review(args) -> int:
     from utils.ai_reviewer import review_paper
 
     paper = _load_paper(args.paper)
-    result = review_paper(paper, _journal(args.journal))
+    result = review_paper(paper, _journal(args.journal), figures=_split_figures(args.figures))
     if args.json:
         _print_json(result)
     else:
@@ -462,7 +462,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--figures", "-f", help="Comma-separated figure paths")
     p.add_argument("--strict", action="store_true", help="Exit 1 if any critical check fails")
 
-    add("review", cmd_review, "AI reviewer simulation", paper=True, journal=True, json_flag=True)
+    p = add(
+        "review", cmd_review, "AI reviewer simulation", paper=True, journal=True, json_flag=True
+    )
+    p.add_argument("--figures", "-f", help="Comma-separated figure paths")
 
     p = add(
         "checklist",
