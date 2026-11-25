@@ -31,7 +31,9 @@ run on Python 3.10–3.13 × Ubuntu/macOS plus Windows).
 - `abstract_generator` cut abstracts at decimal points or mid-sentence; `paper_analytics` counted Korean text as 0 words and split sentences on "e.g." and "0.95"; `table_utils` printed `\u00b1` instead of "±"; `data_sources` matched "wind" inside "window"; `save_figure` leaked figures; `equation_utils` treated `\$` as an equation delimiter.
 
 ### Fixed — demos
-- Both demo manuscripts stated results that contradicted their own computed output (e.g. "RF achieved the highest accuracy" while reporting a higher DNN accuracy). Every comparative claim is now derived from the computed results, with confidence intervals and a McNemar significance test in the seismic demo.
+- **TPU wind demo had target leakage**: the target (record minimum Cp) was predicted from features of the same record, including `min_cp` itself (feature importance 1.0, R² = 0.9999). It now predicts the peak over the unobserved 87.5% of a record from the first 12.5%, with direction-grouped CV, training-free baselines and leakage controls (permuted targets R² ≈ −0.02; RF R² = 0.938).
+- Both demo manuscripts stated results that contradicted their own computed output (e.g. "RF achieved the highest accuracy" while reporting a higher DNN accuracy; "stratified" CV that was plain KFold; "consistent accuracy across wind directions" with a 50× RMSE range). Every comparative claim is now derived from the computed results, with confidence intervals and significance tests.
+- An in-text citation with no reference-list entry was removed and an uncited reference is now cited; demo outputs (figures, Word/PDF, quality reports) are regenerated.
 
 ### Added
 - `utils/guidelines.py`: single cached guideline registry with case-insensitive keys, aliases (`jcsr`, `cbm`, …), "Did you mean …?" errors, schema validation and a `PAPERFACTORY_GUIDELINES_DIR` override.

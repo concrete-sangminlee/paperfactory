@@ -583,7 +583,7 @@ Two complete working examples are included:
 cd examples/demo_tpu_ml && python generate_paper.py
 ```
 
-ML-based peak wind pressure prediction using TPU database — 8 figures, 4 tables, 20 refs, Word output, quality 100/100.
+ML prediction of full-record peak wind pressure from short TPU-style records (leakage-free design with leakage controls) — 8 figures, 4 tables, 20 refs, Word output, quality 100/100.
 
 ### 2. Seismic Engineering (Engineering Structures)
 
@@ -591,7 +591,9 @@ ML-based peak wind pressure prediction using TPU database — 8 figures, 4 table
 cd examples/demo_seismic_dl && python generate_paper.py
 ```
 
-DL-based seismic damage assessment of RC frames — 6 figures, 3 tables, 22 refs, Word + PDF output, quality 100/100.
+ML-based seismic damage classification of RC frames with confidence intervals and a McNemar test — 6 figures, 3 tables, 22 refs, Word + PDF output, quality 100/100.
+
+In both demos every comparative claim in the manuscript is computed from the results (no hard-coded findings).
 
 ---
 
