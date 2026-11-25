@@ -421,7 +421,16 @@ def generate_latex(
         lines.append("\\graphicspath{" + "".join(f"{{{d}}}" for d in graphics_dirs) + "}")
     if not rules["numbered"]:
         lines.append(r"\setcounter{secnumdepth}{0}")
-    if references:
+    if references and doc_class == "ascelike":
+        # ascelike v3 (2025) issues \\bibliographystyle{ascelike} itself and a second one
+        # makes BibTeX stop with "Illegal, another \\bibstyle command"; older releases
+        # do not, so only set it for those.
+        lines += [
+            r"\makeatletter",
+            r"\@ifclasslater{ascelike}{2025/01/01}{}{\bibliographystyle{ascelike}}",
+            r"\makeatother",
+        ]
+    elif references:
         lines.append(f"\\bibliographystyle{{{_bibliography_style(doc_class, guideline)}}}")
     lines.append("")
     lines.append(r"\begin{document}")

@@ -466,5 +466,10 @@ def test_ascelike_does_not_load_amssymb(tmp_path):
     assert r"\documentclass[Journal]{ascelike}" in tex
     assert "amssymb" not in tex
     assert r"\usepackage{amsmath}" in tex
+    # ...and v3 sets \bibliographystyle{ascelike} itself (a second one is a BibTeX error,
+    # "Illegal, another \bibstyle command"), so it is only set for older releases.
+    assert r"\@ifclasslater{ascelike}{2025/01/01}{}{\bibliographystyle{ascelike}}" in tex
+    assert tex.count(r"\bibliographystyle") == 1
     _, _, elsevier, _ = _gen(tmp_path / "e", journal="eng_structures")
     assert r"\usepackage{amsmath,amssymb}" in elsevier
+    assert r"\bibliographystyle{" in elsevier
