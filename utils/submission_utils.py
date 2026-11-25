@@ -509,8 +509,10 @@ def _sentences(text: str) -> list[str]:
     sentences: list[str] = []
     for piece in pieces:
         if sentences:
-            last_word = sentences[-1].rsplit(" ", 1)[-1].lower()
-            if last_word in _ABBREVIATIONS or re.fullmatch(r"(?:[a-z]\.)+", last_word):
+            last_word = sentences[-1].rsplit(" ", 1)[-1]
+            if last_word.lower() in _ABBREVIATIONS or re.fullmatch(
+                r"(?:[A-Za-z]\.){2,}", last_word
+            ):
                 sentences[-1] += " " + piece
                 continue
         sentences.append(piece)

@@ -506,7 +506,7 @@ _WEAK_PATTERNS = (
         "methodology",
         r"\bexperiment(?:s|al)?\b|\bnumerical\b|\bmodel(?:s|l?ing)?\b|\bsimulations?\b|"
         r"\bframework\b|\bapproach\b|\bdata(?:sets?)?\b|\bfinite[- ]element\b|\bprocedures?\b|"
-        r"\bspecimens?\b|\bsetup\b|\bdesign\b|실험|해석|모델",
+        r"\bspecimens?\b|\bsetup\b|실험|해석|모델",
     ),
     (
         "results",
@@ -589,7 +589,7 @@ def normalize_heading(heading) -> str:
 def classify_heading(heading) -> list[str]:
     """Return the body-section categories a heading belongs to (may be several)."""
     text = normalize_heading(heading)
-    if not text:
+    if not text or _is_matter_heading(text):
         return []
     strong = [cat for cat, pattern in _STRONG_PATTERNS.items() if re.search(pattern, text)]
     if strong:

@@ -152,7 +152,13 @@ class TestRequiredSectionsUseGuideline:
             ("1. Introduction", "2. Methods", "3. Results and discussion", "4. Concluding remarks"),
             ("INTRODUCTION", "MATERIALS AND METHODS", "RESULTS & DISCUSSION", "CONCLUSION"),
             ("1 Introduction", "2 Proposed framework", "3 Results", "4 Discussion", "5 Summary"),
-            ("I. INTRODUCTION", "II. METHODOLOGY", "III. RESULTS", "IV. DISCUSSION", "V. CONCLUSIONS"),
+            (
+                "I. INTRODUCTION",
+                "II. METHODOLOGY",
+                "III. RESULTS",
+                "IV. DISCUSSION",
+                "V. CONCLUSIONS",
+            ),
         ],
     )
     def test_synonyms_and_numbering_satisfy_jweia_structure(self, headings):
@@ -283,7 +289,9 @@ class TestJournalAwareLimits:
 
     def test_data_availability_section_heading_counts(self):
         paper = _paper(data_availability=None)
-        paper["sections"].append({"heading": "Data Availability Statement", "content": "On request."})
+        paper["sections"].append(
+            {"heading": "Data Availability Statement", "content": "On request."}
+        )
         assert _check(check_paper(paper, "jweia"), "data_availability")["passed"] is True
 
 
@@ -304,7 +312,9 @@ class TestHelpers:
 
     def test_highlight_rules_from_note(self):
         assert highlight_rules(load_guideline("jweia")) == {"min": 3, "max": 5, "max_chars": 85}
-        custom = {"manuscript_structure": {"highlights_note": "2-4 bullet points, max 100 characters"}}
+        custom = {
+            "manuscript_structure": {"highlights_note": "2-4 bullet points, max 100 characters"}
+        }
         assert highlight_rules(custom) == {"min": 2, "max": 4, "max_chars": 100}
 
     def test_parse_keywords_strips_label(self):

@@ -1,14 +1,5 @@
-import json
-import os
-
+from utils.guidelines import load_guideline as _load_guideline
 from utils.reference_utils import check_duplicates, detect_citation_style, validate_references
-
-GUIDELINES_DIR = os.path.join(os.path.dirname(__file__), "..", "guidelines")
-
-
-def _load_guideline(key):
-    with open(os.path.join(GUIDELINES_DIR, f"{key}.json")) as f:
-        return json.load(f)
 
 
 class TestValidateReferences:
