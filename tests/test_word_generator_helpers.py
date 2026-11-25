@@ -223,6 +223,7 @@ class TestGuidelineInterpretation:
                     "data_availability",
                     "acknowledgments",
                     "notation",
+                    "competing_interests",
                     "references",
                     "tables",
                     "figures",
@@ -235,6 +236,7 @@ class TestGuidelineInterpretation:
                     "acknowledgments",
                     "data_availability",
                     "references",
+                    "competing_interests",
                     "notation",
                     "tables",
                     "figures",
@@ -245,6 +247,7 @@ class TestGuidelineInterpretation:
                 "jbe",
                 [
                     "notation",
+                    "competing_interests",
                     "data_availability",
                     "acknowledgments",
                     "references",
@@ -255,7 +258,14 @@ class TestGuidelineInterpretation:
             ),
             (
                 "eng_structures",
-                ["acknowledgments", "data_availability", "references", "tables", "figures"],
+                [
+                    "acknowledgments",
+                    "competing_interests",
+                    "data_availability",
+                    "references",
+                    "tables",
+                    "figures",
+                ],
                 True,
             ),
             (
@@ -266,6 +276,7 @@ class TestGuidelineInterpretation:
                     "notation",
                     "data_availability",
                     "acknowledgments",
+                    "competing_interests",
                     "references",
                 ],
                 False,

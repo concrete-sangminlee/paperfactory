@@ -21,6 +21,7 @@ from utils.word_generator import (
     _as_sections,
     _as_text,
     _check_content,
+    _competing_interests,
     _contains_hangul,
     _describe_figure,
     _document_layout,
@@ -357,6 +358,7 @@ def generate_latex(
     references = _as_items(paper_content.get("references"))
     data_avail = _as_text(paper_content.get("data_availability"), "\n\n").strip()
     acknowledgments = _as_text(paper_content.get("acknowledgments"), "\n\n").strip()
+    competing = _competing_interests(paper_content)
 
     lines = []
 
@@ -492,6 +494,8 @@ def generate_latex(
                 _escape_latex(acknowledgments),
                 "",
             ]
+        elif block == "competing_interests" and competing:
+            lines += [f"\\section*{{{_escape_line(labels[block])}}}", _escape_latex(competing), ""]
         elif block == "references" and references:
             # Nothing in the body uses \cite, so without \nocite BibTeX would
             # produce an empty reference list.

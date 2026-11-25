@@ -43,6 +43,7 @@ from utils.word_generator import (
     _as_sections,
     _as_text,
     _check_content,
+    _competing_interests,
     _contains_hangul,
     _default_caption,
     _describe_figure,
@@ -549,6 +550,7 @@ def generate_pdf(
     references = _as_items(paper_content.get("references"))
     data_avail = _paragraphs(paper_content.get("data_availability"), styles["BodyText"])
     acknowledgments = _paragraphs(paper_content.get("acknowledgments"), styles["BodyText"])
+    competing = _paragraphs(_competing_interests(paper_content), styles["BodyText"])
 
     def add_tables():
         cap_style = fig_config.get("table_caption_style", "Table {n}. {desc}")
@@ -606,6 +608,10 @@ def generate_pdf(
         "acknowledgments": (
             add_section(labels["acknowledgments"], acknowledgments),
             bool(acknowledgments),
+        ),
+        "competing_interests": (
+            add_section(labels["competing_interests"], competing),
+            bool(competing),
         ),
         "references": (add_references, bool(references)),
         "tables": (add_tables, bool(tables)),

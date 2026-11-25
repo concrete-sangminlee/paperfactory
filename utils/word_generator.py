@@ -439,6 +439,13 @@ _BLOCK_ALIASES = {
     "notation": ("notation", "nomenclature"),
     "data_availability": ("data availability",),
     "acknowledgments": ("acknowledg",),
+    "competing_interests": (
+        "declaration of competing",
+        "declaration of interest",
+        "competing interest",
+        "conflict of interest",
+        "conflicts of interest",
+    ),
     "references": ("references",),
     "tables": ("tables",),
     "figures": ("figure captions", "figures"),
@@ -447,10 +454,29 @@ _DEFAULT_LABELS = {
     "notation": "Notation",
     "data_availability": "Data Availability Statement",
     "acknowledgments": "Acknowledgments",
+    "competing_interests": "Declaration of Competing Interest",
     "references": "References",
     "tables": "Tables",
     "figures": "Figures",
 }
+
+
+#: paper_content keys accepted for the competing-interest declaration.
+COMPETING_INTEREST_KEYS = (
+    "conflict_of_interest",
+    "conflicts_of_interest",
+    "competing_interests",
+    "declaration_of_competing_interest",
+)
+
+
+def _competing_interests(paper_content: dict) -> str:
+    """Return the competing-interest declaration from whichever key the paper uses."""
+    for key in COMPETING_INTEREST_KEYS:
+        text = _as_text(paper_content.get(key), "\n\n").strip()
+        if text:
+            return text
+    return ""
 
 
 def _document_layout(guideline: dict) -> dict:
@@ -477,11 +503,11 @@ def _document_layout(guideline: dict) -> dict:
     ).lower()
     floats_at_end = "end" in placement or "separate" in placement or "embedded" not in placement
     if floats_at_end:
-        order = ["notation", "data_availability", "acknowledgments", "references"]
-        order += ["tables", "figures"]
+        order = ["notation", "data_availability", "acknowledgments", "competing_interests"]
+        order += ["references", "tables", "figures"]
     else:
         order = ["tables", "figures", "notation", "data_availability", "acknowledgments"]
-        order += ["references"]
+        order += ["competing_interests", "references"]
 
     intro = next((i for i, s in enumerate(sections) if s.startswith("introduction")), None)
     notation_pos = position("notation")
@@ -496,7 +522,11 @@ def _document_layout(guideline: dict) -> dict:
         order[slot] = block
 
     labels = dict(_DEFAULT_LABELS)
-    for block in ("notation", "data_availability", "acknowledgments", "references"):
+    for block in ("notation", "data_availability", "acknowledgments", "competing_interests"):
+        pos = position(block)
+        if pos is not None:
+            labels[block] = raw_sections[pos]
+    for block in ("references",):
         pos = position(block)
         if pos is not None:
             labels[block] = raw_sections[pos]
@@ -1024,6 +1054,11 @@ def generate_word(
         _add_heading_l1(doc, labels["acknowledgments"], formatting, upper)
         _add_body_text(doc, acknowledgments, formatting)
 
+    def add_competing_interests():
+        doc.add_paragraph()
+        _add_heading_l1(doc, labels["competing_interests"], formatting, upper)
+        _add_body_text(doc, competing, formatting)
+
     def add_references():
         doc.add_page_break()
         _add_heading_l1(doc, labels["references"], formatting, upper)
@@ -1035,10 +1070,12 @@ def generate_word(
 
     data_avail = _as_text(paper_content.get("data_availability"), "\n\n")
     acknowledgments = _as_text(paper_content.get("acknowledgments"), "\n\n")
+    competing = _competing_interests(paper_content)
     blocks = {
         "notation": (add_notation, bool(notation) and not layout["front_notation"]),
         "data_availability": (add_data_availability, bool(data_avail.strip())),
         "acknowledgments": (add_acknowledgments, bool(acknowledgments.strip())),
+        "competing_interests": (add_competing_interests, bool(competing)),
         "references": (add_references, bool(references)),
         "tables": (add_tables, bool(tables_data)),
         "figures": (add_figures, bool(fig_entries)),
