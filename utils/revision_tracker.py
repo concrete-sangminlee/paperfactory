@@ -1,7 +1,9 @@
 """Track paper revisions and generate response-to-reviewers documents."""
 
+import difflib
 import json
 import os
+import textwrap
 from datetime import datetime
 
 DEFAULT_REVISIONS_DIR = os.path.join(
@@ -48,10 +50,11 @@ def create_revision(
     for i, comment in enumerate(reviewer_comments, 1):
         entry = {
             "id": i,
-            "reviewer": comment.get("reviewer", "Reviewer"),
-            "comment": comment.get("comment", ""),
-            "section": comment.get("section", "General"),
-            "type": comment.get("type", "minor"),
+            "reviewer": str(comment.get("reviewer") or "Reviewer").strip() or "Reviewer",
+            "comment": str(comment.get("comment") or ""),
+            "section": str(comment.get("section") or "General").strip() or "General",
+            # "Major", " MAJOR " and "major" are the same type; anything else is minor.
+            "type": "major" if _normalize_type(comment.get("type")) == "major" else "minor",
             "status": "pending",
             "response": "",
             "changes_made": "",
@@ -94,21 +97,40 @@ def address_comment(
     -------
     dict
         Updated revision record.
+
+    Raises
+    ------
+    KeyError
+        If no comment has ``comment_id`` (an int, or a string of digits).
     """
+    if isinstance(comment_id, str) and comment_id.strip().isdigit():
+        comment_id = int(comment_id)
     for comment in revision["comments"]:
         if comment["id"] == comment_id:
             comment["status"] = "addressed"
             comment["response"] = response
             comment["changes_made"] = changes_made
             break
+    else:
+        available = ", ".join(str(c["id"]) for c in revision["comments"]) or "(none)"
+        raise KeyError(f"No reviewer comment with id {comment_id!r}. Available: {available}")
 
-    revision["summary"]["addressed"] = sum(
-        1 for c in revision["comments"] if c["status"] == "addressed"
-    )
-    if revision["summary"]["addressed"] == revision["summary"]["total"]:
+    summary = revision["summary"]
+    summary["total"] = len(revision["comments"])
+    summary["addressed"] = sum(1 for c in revision["comments"] if c["status"] == "addressed")
+    if summary["addressed"] == summary["total"]:
         revision["status"] = "complete"
 
     return revision
+
+
+def _normalize_type(value) -> str:
+    return str(value or "minor").strip().lower()
+
+
+def _indent(text: str) -> str:
+    """Indent every line of a (possibly multi-line) response by two spaces."""
+    return textwrap.indent(str(text or ""), "  ", lambda line: True)
 
 
 def generate_response_letter(revision: dict) -> str:
@@ -124,9 +146,8 @@ def generate_response_letter(revision: dict) -> str:
     lines.append("=" * 60)
     lines.append(f"\nManuscript: {revision.get('original_title', '')}")
     lines.append(f"Date: {datetime.now().strftime('%Y-%m-%d')}")
-    lines.append(
-        f"Status: {revision['summary']['addressed']}/{revision['summary']['total']} comments addressed"
-    )
+    summary = revision["summary"]
+    lines.append(f"Status: {summary['addressed']}/{summary['total']} comments addressed")
     lines.append("")
 
     lines.append("Dear Editor and Reviewers,")
@@ -153,17 +174,17 @@ def generate_response_letter(revision: dict) -> str:
 
         for comment in comments:
             lines.append(
-                f"\nComment {comment['id']} [{comment['type'].upper()}] "
-                f"(Section: {comment['section']}):"
+                f"\nComment {comment['id']} [{_normalize_type(comment.get('type')).upper()}] "
+                f"(Section: {comment.get('section') or 'General'}):"
             )
-            lines.append(f'  "{comment["comment"]}"')
+            lines.append(_indent(f'"{comment["comment"]}"'))
             lines.append("")
 
             if comment["status"] == "addressed":
                 lines.append("  Response:")
-                lines.append(f"  {comment['response']}")
+                lines.append(_indent(comment["response"]))
                 lines.append("\n  Changes made:")
-                lines.append(f"  {comment['changes_made']}")
+                lines.append(_indent(comment["changes_made"]))
             else:
                 lines.append("  [PENDING - Not yet addressed]")
             lines.append("")
@@ -180,24 +201,73 @@ def generate_response_letter(revision: dict) -> str:
     return "\n".join(lines)
 
 
-def track_changes(original_text: str, revised_text: str) -> dict:
+def track_changes(original_text, revised_text) -> dict:
     """Compare original and revised text to identify changes.
+
+    The comparison is a word-level diff (case-insensitive), so repeated,
+    duplicated or re-ordered words are counted correctly.
+
+    Parameters
+    ----------
+    original_text, revised_text : str or dict
+        Plain text, or two ``paper_content`` dicts; with dicts, the sections
+        whose text changed are reported in ``sections_changed``.
 
     Returns
     -------
     dict with keys:
-        - added_words (int): approximate words added
-        - removed_words (int): approximate words removed
-        - sections_changed (list): sections with changes
+        - added_words (int): words inserted in the revision
+        - removed_words (int): words deleted from the original
+        - net_change (int): revised word count minus original word count
+        - sections_changed (list): headings of changed sections (dict inputs only)
+        - similarity (float): 0-1 word-sequence similarity ratio
     """
-    orig_words = set(original_text.lower().split())
-    rev_words = set(revised_text.lower().split())
+    sections_changed = []
+    if isinstance(original_text, dict) or isinstance(revised_text, dict):
+        orig_sections = _section_texts(original_text if isinstance(original_text, dict) else {})
+        rev_sections = _section_texts(revised_text if isinstance(revised_text, dict) else {})
+        for heading in list(orig_sections) + [h for h in rev_sections if h not in orig_sections]:
+            if orig_sections.get(heading, "").split() != rev_sections.get(heading, "").split():
+                sections_changed.append(heading)
+        original_text = "\n".join(orig_sections.values())
+        revised_text = "\n".join(rev_sections.values())
 
-    added = rev_words - orig_words
-    removed = orig_words - rev_words
+    orig_words = str(original_text or "").lower().split()
+    rev_words = str(revised_text or "").lower().split()
+
+    matcher = difflib.SequenceMatcher(None, orig_words, rev_words, autojunk=False)
+    added = removed = 0
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag in ("replace", "delete"):
+            removed += i2 - i1
+        if tag in ("replace", "insert"):
+            added += j2 - j1
 
     return {
-        "added_words": len(added),
-        "removed_words": len(removed),
+        "added_words": added,
+        "removed_words": removed,
         "net_change": len(rev_words) - len(orig_words),
+        "sections_changed": sections_changed,
+        "similarity": round(matcher.ratio(), 4) if (orig_words or rev_words) else 1.0,
     }
+
+
+def _section_texts(paper_content: dict) -> dict:
+    """Map each section heading to its full text (including subsections)."""
+    texts = {}
+    for i, sec in enumerate(paper_content.get("sections") or [], 1):
+        if not isinstance(sec, dict):
+            continue
+        heading = str(sec.get("heading") or f"Section {i}")
+        parts = [sec.get("content") or ""]
+        for sub in sec.get("subsections") or []:
+            if isinstance(sub, dict):
+                parts.append(sub.get("content") or "")
+                for subsub in sub.get("subsections") or []:
+                    if isinstance(subsub, dict):
+                        parts.append(subsub.get("content") or "")
+        key, n = heading, 2
+        while key in texts:
+            key, n = f"{heading} ({n})", n + 1
+        texts[key] = "\n".join(parts)
+    return texts
